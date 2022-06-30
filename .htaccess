@@ -1,0 +1,7 @@
+Options +FollowSymLinks -Indexes -MultiViews
+RewriteEngine On
+RewriteBase /tachi
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
+php_value session.gc_maxlifetime 31557600
