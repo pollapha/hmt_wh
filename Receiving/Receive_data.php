@@ -97,13 +97,7 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			// $sql = "SELECT DN_Number FROM tbl_receiving_header
-			// where DN_Number = '$DN_Number'";
-			// $re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			// if ($re1->num_rows > 0) {
-			// 	throw new Exception('DN Number มี GRN Number แล้ว');
-			// }
-
+			
 			$sql = "SELECT DN_Number FROM tbl_dn_order
 			where DN_Number = '$DN_Number' limit 1";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -165,7 +159,8 @@ if ($type <= 10) //data
 			rp.Part_No
 			FROM tbl_receiving_pre rp
 			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where rp.Part_No = '$Part_No' and rp.Package_Number = '$Package_Number' and rp.FG_Serial_Number = '$FG_Serial_Number'";
+			where rp.Part_No = '$Part_No' and rp.Package_Number = '$Package_Number' 
+			and rp.FG_Serial_Number = '$FG_Serial_Number' and rp.status = 'PENDING'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows > 0) {
 				throw new Exception('Order นี้ได้ทำการเพิ่มไปเรียบร้อยแล้ว' . __LINE__);

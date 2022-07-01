@@ -33,7 +33,7 @@ if ($type <= 10) //data
 			echo "[]";
 		}
 		$sql = "SELECT GRN_Number as value
-		from tbl_receiving_header where GRN_Number like '%$val%' limit 1";
+		from tbl_receiving_header where GRN_Number like '%$val%' limit 5";
 		if ($re1 = $mysqli->query($sql)) {
 			echo json_encode(jsonRow($re1, false, 0));
 		} else {
