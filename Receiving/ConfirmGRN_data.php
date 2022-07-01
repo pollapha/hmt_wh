@@ -54,6 +54,7 @@ if ($type <= 10) //data
 			$sql = "SELECT GRN_Number,
 			date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
 			DN_Number,
+			Package_Number,
 			Total_Qty,
 			Status_Receiving,
 			date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
@@ -131,6 +132,8 @@ if ($type <= 10) //data
 			$sql = "SELECT GRN_Number,
 			date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
 			DN_Number,
+			
+			Package_Number,
 			Total_Qty,
 			Status_Receiving,
 			date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
