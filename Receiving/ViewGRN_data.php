@@ -100,8 +100,7 @@ if ($type <= 10) //data
 		}
 
 		$sql = "UPDATE tbl_receiving_header
-			set Total_Qty = Total_Qty - $Qty,
-			Status_Receiving = 'CANCEL'
+			set Status_Receiving = 'CANCEL'
 			where GRN_Number = '$GRN_Number'";
 		sqlError($mysqli, __LINE__, $sql, 1);
 		if ($mysqli->affected_rows == 0) {

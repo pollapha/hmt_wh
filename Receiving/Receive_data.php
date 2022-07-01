@@ -160,7 +160,7 @@ if ($type <= 10) //data
 			FROM tbl_receiving_pre rp
 			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
 			where rp.Part_No = '$Part_No' and rp.Package_Number = '$Package_Number' 
-			and rp.FG_Serial_Number = '$FG_Serial_Number' and rp.status = 'PENDING'";
+			and rp.FG_Serial_Number = '$FG_Serial_Number' and (rp.status = 'PENDING' OR rp.status = 'COMPLETE')";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows > 0) {
 				throw new Exception('Order นี้ได้ทำการเพิ่มไปเรียบร้อยแล้ว' . __LINE__);

@@ -85,6 +85,8 @@ var header_ConfirmGRN = function () {
                                                                     function (json) {
                                                                         //ele('find').callEvent("onItemClick", []);
                                                                     });
+                                                                    
+                                                                ele('GRN_Number').setValue('');
                                                             }
                                                         }
                                                     }),
@@ -95,7 +97,7 @@ var header_ConfirmGRN = function () {
                                                     {},
                                                     vw1('button', 'confirm', 'Confirm GRN', {
                                                         type: 'form',
-                                                        width: 120, 
+                                                        width: 120,
                                                         hidden: 1,
                                                         on: {
                                                             onItemClick: function () {
