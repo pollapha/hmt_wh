@@ -68,7 +68,7 @@ var header_PartMaster = function () {
                                                 {
                                                     cols: [
                                                         vw1('text', 'MMTH_Part_No', 'MMTH Part No.', { labelPosition: "top" }),
-                                                        vw1('text', 'TAST_No', 'TAST_No.', { labelPosition: "top", required: false }),
+                                                        vw1('text', 'TAST_No', 'TAST No.', { labelPosition: "top", required: false }),
                                                     ],
                                                 },
                                                 {
@@ -170,7 +170,7 @@ var header_PartMaster = function () {
                                                 {
                                                     cols: [
                                                         vw2('text', 'MMTH_Part_No_edit', 'MMTH_Part_No', 'MMTH Part No.', { labelPosition: "top" }),
-                                                        vw2('text', 'TAST_No_edit', 'TAST_No', 'TAST_No.', { labelPosition: "top", required: false }),
+                                                        vw2('text', 'TAST_No_edit', 'TAST_No', 'TAST No.', { labelPosition: "top", required: false }),
                                                     ],
                                                 },
                                                 {
@@ -314,16 +314,16 @@ var header_PartMaster = function () {
                                                 }
                                             },
                                             { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
-                                            { id: "Part_No", header: ["Part No.", { content: "textFilter" }], width: 200 },
-                                            { id: "Part_Name", header: ["Part Name", { content: "textFilter" }], width: 200 },
-                                            { id: "MMTH_Part_No", header: ["MMTH Part No.", { content: "textFilter" }], width: 200 },
-                                            { id: "CBM_Per_Package", header: ["CBM Per Package", { content: "textFilter" }], width: 200 },
-                                            { id: "Qty_Per_Package", header: ["Qty Per Package", { content: "textFilter" }], width: 200 },
+                                            { id: "Part_No", header: ["Part Number", { content: "textFilter" }], width: 150 },
+                                            { id: "Part_Name", header: ["Part Name", { content: "textFilter" }], width: 240 },
+                                            { id: "MMTH_Part_No", header: ["MMTH Part Number", { content: "textFilter" }], width: 180 },
+                                            { id: "CBM_Per_Package", header: ["CBM/Package", { content: "textFilter" }], width: 140 },
+                                            { id: "Qty_Per_Package", header: ["Qty/Package", { content: "textFilter" }], width: 140 },
                                             { id: "Specification", header: ["Specification", { content: "textFilter" }], width: 200 },
-                                            { id: "Weight_Package_Part", header: ["Weight_Package_Part", { content: "textFilter" }], width: 200 },
-                                            { id: "TAST_No", header: ["TAST No.", { content: "textFilter" }], width: 200 },
-                                            { id: "Active", header: ["Active", { content: "textFilter" }], width: 200 },
-                                            { id: "Creation_Date", header: ["Creation_Date", { content: "textFilter" }], width: 200 },
+                                            { id: "Weight_Package_Part", header: ["Weight(Package+Part)", { content: "textFilter" }], width: 200 },
+                                            { id: "TAST_No", header: ["TAST No.", { content: "textFilter" }], width: 140 },
+                                            { id: "Active", header: ["Active", { content: "textFilter" }], width: 100 },
+                                            { id: "Creation_Date", header: ["Creation Date", { content: "textFilter" }], width: 150 },
 
                                         ],
                                         onClick:
