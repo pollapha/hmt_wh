@@ -176,3 +176,4 @@ cython_debug/
 #connection
 /php/connection.php
 /order_file/*
+/session/*
