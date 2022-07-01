@@ -108,7 +108,6 @@ var header_ConfirmGRN = function () {
                                                                                 ajax(fd, obj, 41, function (json) {
                                                                                     ele('GRN_Number').setValue('');
                                                                                     ele('confirm').hide();
-                                                                                    setTable('dataT1', json.data);
                                                                                 }, null,
                                                                                     function (json) {
                                                                                         //ele('find').callEvent("onItemClick", []);
@@ -152,7 +151,6 @@ var header_ConfirmGRN = function () {
                                     { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
                                     { id: "FG_Serial_Number", header: ["FG Serial Number", { content: "textFilter" }], width: 200 },
                                     { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
-                                    { id: "Status_Receiving", header: ["Status Receiving", { content: "textFilter" }], width: 200 },
                                     { id: "Confirm_Receive_DateTime", header: ["Confirm Receive DateTime", { content: "textFilter" }], width: 200 },
                                 ],
                                 onClick:

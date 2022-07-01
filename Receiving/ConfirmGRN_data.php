@@ -57,7 +57,6 @@ if ($type <= 10) //data
 			Package_Number,
 			FG_Serial_Number,
 			Qty,
-			Status_Receiving,
 			date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
 			FROM tbl_receiving_header rh
 			inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
@@ -105,10 +104,10 @@ if ($type <= 10) //data
 		$mysqli->autocommit(FALSE);
 		try {
 			$sql = "SELECT
-		rh.Receiving_Header_ID
-		from tbl_receiving_pre rp
-		inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-		where GRN_Number = '$GRN_Number' and Status_Receiving = 'PENDING' and status = 'COMPLETE'";
+			rh.Receiving_Header_ID
+			from tbl_receiving_pre rp
+			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
+			where GRN_Number = '$GRN_Number' and Status_Receiving = 'PENDING' and status = 'COMPLETE'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -126,22 +125,35 @@ if ($type <= 10) //data
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-			$mysqli->commit();
 
-			$sql = "SELECT GRN_Number,
-			date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
-			DN_Number,
-			FG_Serial_Number,
-			Package_Number,
-			Total_Qty,
-			Status_Receiving,
-			date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
-			FROM tbl_receiving_header rh
-			inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where GRN_Number = '$GRN_Number' and Status_Receiving = 'COMPLETE' and status = 'COMPLETE'
-			group by GRN_Number
-			order by GRN_Number asc";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			$sp_trans = "CALL SP_Transaction_Save('IN','$GRN_Number','','','$cBy');;";
+
+			// echo $sp_trans;exit();
+
+			$re1 = sqlError($mysqli, __LINE__, $sp_trans, 1);
+
+			if (!$re1) {
+
+				throw new Exception('ERROR, SP');
+			} else {
+
+				$row = $re1->fetch_array(MYSQLI_NUM);
+
+				$sp_status = $row[0];
+
+				$sp_ms = $row[1];
+
+				if ($sp_status == '0') {
+
+					throw new Exception($sp_ms);
+				} else {
+				}
+			}
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+
+			$mysqli->commit();
 			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 		} catch (Exception $e) {
 			$mysqli->rollback();
