@@ -55,14 +55,13 @@ if ($type <= 10) //data
 			date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
 			DN_Number,
 			Package_Number,
-			Total_Qty,
+			FG_Serial_Number,
+			Qty,
 			Status_Receiving,
 			date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
 			FROM tbl_receiving_header rh
 			inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where GRN_Number = '$GRN_Number' and Status_Receiving = 'PENDING' and status = 'COMPLETE'
-			group by GRN_Number
-			order by GRN_Number asc";
+			where GRN_Number = '$GRN_Number' and Status_Receiving = 'PENDING' and status = 'COMPLETE'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -132,7 +131,7 @@ if ($type <= 10) //data
 			$sql = "SELECT GRN_Number,
 			date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
 			DN_Number,
-			
+			FG_Serial_Number,
 			Package_Number,
 			Total_Qty,
 			Status_Receiving,
@@ -150,7 +149,6 @@ if ($type <= 10) //data
 		}
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else closeDBT($mysqli, 2, 'TYPE ERROR');
-
 
 $mysqli->close();
 exit();

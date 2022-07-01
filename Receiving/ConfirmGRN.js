@@ -148,10 +148,10 @@ var header_ConfirmGRN = function () {
                                 columns: [
                                     { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
                                     { id: "Receive_DateTime", header: ["Receive DateTime", { content: "textFilter" }], width: 200 },
-                                    { id: "GRN_Number", header: ["GRN Number", { content: "textFilter" }], width: 200 },
                                     { id: "DN_Number", header: ["DN Number", { content: "textFilter" }], width: 150 },
                                     { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
-                                    { id: "Total_Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
+                                    { id: "FG_Serial_Number", header: ["FG Serial Number", { content: "textFilter" }], width: 200 },
+                                    { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
                                     { id: "Status_Receiving", header: ["Status Receiving", { content: "textFilter" }], width: 200 },
                                     { id: "Confirm_Receive_DateTime", header: ["Confirm Receive DateTime", { content: "textFilter" }], width: 200 },
                                 ],
