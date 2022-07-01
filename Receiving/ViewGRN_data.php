@@ -134,7 +134,8 @@ function select_group($mysqli)
     Part_No,
 	Qty,
     Package_Number,
-    FG_Serial_Number
+    FG_Serial_Number,
+	date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
 	from tbl_receiving_header rh
     inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
     WHERE Receive_DateTime IS NOT NULL and status = 'COMPLETE'
@@ -162,6 +163,7 @@ function select_group($mysqli)
 			"No" => $c, 'Is_Header' => 'YES', "GRN_Number" => $key1,
 			"Receive_DateTime" => $value1[0]['Receive_DateTime'],
 			"DN_Number" => $value1[0]['DN_Number'],
+			"Confirm_Receive_DateTime" => $value1[0]['Confirm_Receive_DateTime'],
 			'Total_Item' => count($value1), "open" => 0, "data" => $sub
 		);
 		$c++;
@@ -198,7 +200,8 @@ function sqlexport_excel()
     Part_No,
 	Qty,
     Package_Number,
-    FG_Serial_Number
+    FG_Serial_Number,
+	date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
 	from tbl_receiving_header rh
     inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
     WHERE Receive_DateTime IS NOT NULL and status = 'COMPLETE'
