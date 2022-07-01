@@ -85,8 +85,6 @@ var header_ConfirmGRN = function () {
                                                                     function (json) {
                                                                         //ele('find').callEvent("onItemClick", []);
                                                                     });
-                                                                    
-                                                                ele('GRN_Number').setValue('');
                                                             }
                                                         }
                                                     }),
