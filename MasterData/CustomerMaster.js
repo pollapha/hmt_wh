@@ -267,14 +267,9 @@ var header_CustomerMaster = function () {
                                                 }
                                             },
                                             { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
-                                            { id: "Header_DateTime", header: ["Header_DateTime", { content: "textFilter" }], width: 200 },
-                                            { id: "DN_Number", header: ["DN_Number", { content: "textFilter" }], width: 200 },
-                                            { id: "DN_Date_Text", header: ["DN_Date_Text", { content: "textFilter" }], width: 200 },
-                                            { id: "FG_Serial_Number", header: ["FG_Serial_Number", { content: "textFilter" }], width: 200 },
-                                            { id: "FG_Date_Text", header: ["FG_Date_Text", { content: "textFilter" }], width: 200 },
-                                            { id: "Part_No", header: ["Part_No", { content: "textFilter" }], width: 200 },
-                                            { id: "Receive_Status", header: ["Receive_Status", { content: "textFilter" }], width: 200 },
-                                            { id: "File_Name", header: ["File_Name", { content: "textFilter" }], width: 200 },
+                                            { id: "Customer_Code", header: ["Customer Code", { content: "textFilter" }], width: 200 },
+                                            { id: "Customer_Name", header: ["Customer Name", { content: "textFilter" }], width: 200 },
+                                            { id: "Status", header: ["Status", { content: "textFilter" }], width: 200 },
                                             { id: "Creation_Date", header: ["Creation_Date", { content: "textFilter" }], width: 200 },
                                         ],
                                         onClick:
