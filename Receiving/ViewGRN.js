@@ -111,6 +111,12 @@ var header_ViewGRN = function () {
                                     editable: true, scheme:
                                     {
                                         $change: function (item) {
+                                            if (item.Is_Header == 'YES' && item.Confirm_Receive_DateTime != null && item.Status_Receiving == 'COMPLETE') {
+                                                item.$css = { "background": "#afeac8", "font-weight": "bold" };
+                                            }
+                                            if (item.Is_Header == 'YES' && item.Confirm_Receive_DateTime == null && item.Status_Receiving == 'PENDING') {
+                                                item.$css = { "background": "#ffffb2", "font-weight": "bold" };
+                                            }
                                         }
                                     },
                                     columns: [
