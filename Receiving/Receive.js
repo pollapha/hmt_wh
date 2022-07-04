@@ -80,7 +80,7 @@ var header_Receive = function () {
                                     {
                                         cols: [
                                             vw1("text", 'DN_Number', "DN Number", {
-                                                required: true, suggest: fd + "?type=1",
+                                                required: true, suggest: fd + "?type=1", width: 250
                                             }),
                                             {
                                                 rows: [
@@ -118,7 +118,7 @@ var header_Receive = function () {
                                                     })
                                                 ]
                                             },
-                                            { width: 645 }
+                                            {}
                                         ],
                                     },
 
@@ -177,12 +177,14 @@ var header_Receive = function () {
                                 rows: [
                                     {
                                         cols: [
-                                            vw1("text", 'GRN_Number', "GRN Number", {}),
+                                            vw1("text", 'GRN_Number', "GRN Number", {width: 250}),
                                             vw2("text", 'Package_Number', 'Package_Number', "Package Number", {
                                                 //required: true, suggest: fd + "?type=2",
+                                                width: 250
                                             }),
                                             vw1("text", 'FG_Serial_Number', "Serial Number", {
-                                                //required: true, suggest: fd + "?type=3", 
+                                                //required: true, suggest: fd + "?type=3",
+                                                width: 250 
                                             }),
                                             {
                                                 rows: [
@@ -225,6 +227,7 @@ var header_Receive = function () {
                                                     },
                                                 ]
                                             },
+                                            {},
                                             {}
                                         ]
                                     },
