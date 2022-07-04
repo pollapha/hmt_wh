@@ -72,8 +72,8 @@ var header_LocationMaster = function () {
                             cols:
                                 [
                                     {},
-                                    vw1('button', 'save', 'Save', {
-                                        type: 'form', width: 100,
+                                    vw1('button', 'save', 'Save (บันทึก)', {
+                                        type: 'form', width: 120,
                                         on: {
                                             onItemClick: function () {
                                                 console.log(ele('win_add_form').getValues());
@@ -98,8 +98,8 @@ var header_LocationMaster = function () {
                                             }
                                         }
                                     }),
-                                    vw1('button', 'cancel', 'Cancel', {
-                                        type: 'danger', width: 100,
+                                    vw1('button', 'cancel', 'Cancel (ยกเลิก)', {
+                                        type: 'danger', width: 120,
                                         on: {
                                             onItemClick: function () {
                                                 ele('win_add').hide();
@@ -155,8 +155,8 @@ var header_LocationMaster = function () {
                             cols:
                                 [
                                     {},
-                                    vw1('button', 'edit', 'Save', {
-                                        type: 'form', width: 100,
+                                    vw1('button', 'edit', 'Save (บันทึก)', {
+                                        type: 'form', width: 150,
                                         on: {
                                             onItemClick: function () {
                                                 var obj = ele('win_edit_form').getValues();
@@ -182,8 +182,8 @@ var header_LocationMaster = function () {
                                         }
                                     }),
 
-                                    vw1('button', 'cancel_edit', 'Cancel', {
-                                        type: 'danger', width: 100,
+                                    vw1('button', 'cancel_edit', 'Cancel (ยกเลิก)', {
+                                        type: 'danger', width: 120,
                                         on: {
                                             onItemClick: function () {
                                                 ele('win_edit').hide();
@@ -222,7 +222,7 @@ var header_LocationMaster = function () {
                                                 }
                                             }
                                         }),
-                                        vw1('button', 'refresh', 'Refresh', {
+                                        vw1('button', 'find', 'Find (ค้นหา)', {
                                             on: {
                                                 onItemClick: function (id, e) {
                                                     console.log(ele("form1").getValues());
@@ -263,7 +263,7 @@ var header_LocationMaster = function () {
                                             { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
                                             { id: "Location_Code", header: ["Location Code", { content: "textFilter" }], width: 290 },
                                             { id: "Status", header: ["Status", { content: "textFilter" }], width: 290 },
-                                            { id: "Creation_Date", header: ["Creation_Date", { content: "textFilter" }], width: 300 },
+                                            { id: "Creation_Date", header: ["Creation Date", { content: "textFilter" }], width: 300 },
 
                                         ],
                                         onClick:

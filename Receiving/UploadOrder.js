@@ -104,26 +104,26 @@ var header_UploadOrder = function () {
                                                 {
                                                     cols: [
                                                         vw1('text', 'DN_ID', 'DN ID', { labelPosition: "top", hidden: 1 }),
-                                                        vw2("datepicker", 'Header_DateTime_edit', 'Header_DateTime', "Header_DateTime", { value: dayjs().format("YYYY-MM-DD"), stringResult: true, ...datatableDateFormat, required: false }),
-                                                        vw2('text', 'DN_Number_edit', 'DN_Number', 'DN_Number', { labelPosition: "top" }),
+                                                        vw2("datepicker", 'Header_DateTime_edit', 'Header_DateTime', "Header DateTime", { value: dayjs().format("YYYY-MM-DD"), stringResult: true, ...datatableDateFormat, required: false }),
+                                                        vw2('text', 'DN_Number_edit', 'DN_Number', 'DN Number', { labelPosition: "top" }),
                                                     ],
                                                 },
                                                 {
                                                     cols: [
-                                                        vw2('text', 'DN_Date_Text_edit', 'DN_Date_Text', 'DN_Date_Text', { labelPosition: "top" }),
-                                                        vw2('text', 'Package_Number', 'Package_Number', 'Package_Number', { labelPosition: "top", required: false }),
+                                                        vw2('text', 'DN_Date_Text_edit', 'DN_Date_Text', 'DN Date Text', { labelPosition: "top" }),
+                                                        vw2('text', 'Package_Number', 'Package_Number', 'Package Number', { labelPosition: "top", required: false }),
                                                     ],
                                                 },
                                                 {
                                                     cols: [
-                                                        vw2('text', 'FG_Serial_Number_edit', 'FG_Serial_Number', 'FG_Serial_Number', { labelPosition: "top" }),
-                                                        vw2('text', 'FG_Date_Text_edit', 'FG_Date_Text', 'FG_Date_Text', { labelPosition: "top" }),
+                                                        vw2('text', 'FG_Serial_Number_edit', 'FG_Serial_Number', 'Serial Number', { labelPosition: "top" }),
+                                                        vw2('text', 'FG_Date_Text_edit', 'FG_Date_Text', 'FG Date Text', { labelPosition: "top" }),
                                                     ],
                                                 },
                                                 {
                                                     cols: [
                                                         vw2('text', 'Part_No_edit', 'Part_No', 'Part_No', { labelPosition: "top", required: false }),
-                                                        vw2('richselect', 'Receive_Status_edit', 'Receive_Status', 'Receive_Status', {
+                                                        vw2('richselect', 'Receive_Status_edit', 'Receive_Status', 'Receive Status', {
                                                             labelPosition: "top",
                                                             value: 'Y', options: [
                                                                 { id: 'Y', value: "Yes" },
@@ -196,11 +196,28 @@ var header_UploadOrder = function () {
             rows:
                 [
                     {
-                        view: "form", scroll: false, id: $n('form1'),
+                        view: "form", paddingY: 0, scroll: false, id: $n('form1'),
                         elements: [
                             {
                                 cols:
                                     [
+                                        vw1('button', 'find', 'Find (ค้นหา)', {
+                                            width: 150,
+                                            on: {
+                                                onItemClick: function (id, e) {
+                                                    console.log(ele("form1").getValues());
+                                                    var obj = ele('form1').getValues();
+
+                                                    ajax(fd, obj, 1, function (json) {
+                                                        //webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'บันทึกสำเร็จ', callback: function () { } });
+                                                        setTable('dataT1', json.data);
+                                                    }, null,
+                                                        function (json) {
+                                                            /* ele('find').callEvent("onItemClick", []); */
+                                                        });
+                                                }
+                                            }
+                                        }),
                                         vw1("uploader", 'Upload_DN', "Upload DN", {
                                             link: "mytemplate", autosend: false,
                                             width: 150, hidden: false, multiple: false, on:
@@ -227,9 +244,9 @@ var header_UploadOrder = function () {
                                             borderless: true,
                                         },
 
-                                        vw1("button", 'save_file', "Save files", {
+                                        vw1("button", 'save_file', "Save files (บันทึกไฟล์)", {
                                             hidden: 1,
-                                            type: 'form', width: 150,
+                                            type: 'form', width: 200,
                                             click: function () {
                                                 ele("Upload_DN").files.data.each(function (obj, index) {
                                                     var formData = new FormData();
@@ -271,23 +288,6 @@ var header_UploadOrder = function () {
                                                 });
                                             }
                                         }),
-                                        vw1('button', 'refresh', 'Refresh', {
-                                            width: 150,
-                                            on: {
-                                                onItemClick: function (id, e) {
-                                                    console.log(ele("form1").getValues());
-                                                    var obj = ele('form1').getValues();
-
-                                                    ajax(fd, obj, 1, function (json) {
-                                                        //webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'บันทึกสำเร็จ', callback: function () { } });
-                                                        setTable('dataT1', json.data);
-                                                    }, null,
-                                                        function (json) {
-                                                            /* ele('find').callEvent("onItemClick", []); */
-                                                        });
-                                                }
-                                            }
-                                        }),
                                         vw1("button", 'btnExport', "Export (โหลดเป็นไฟล์เอ๊กเซล)", {
                                             width: 200, on:
                                             {
@@ -323,7 +323,7 @@ var header_UploadOrder = function () {
                                             { id: "DN_Number", header: ["DN Number", { content: "textFilter" }], width: 150 },
                                             { id: "DN_Date_Text", header: ["DN Date", { content: "textFilter" }], width: 100 },
                                             { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
-                                            { id: "FG_Serial_Number", header: ["FG Serial Number", { content: "textFilter" }], width: 200 },
+                                            { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
                                             { id: "FG_Date_Text", header: ["FG Date", { content: "textFilter" }], width: 200 },
                                             { id: "Part_No", header: ["Part No", { content: "textFilter" }], width: 150 },
                                             { id: "Receive_Status", header: ["Receive Status", { content: "textFilter" }], width: 100 },

@@ -77,8 +77,8 @@ var header_ViewGRN = function () {
                                                 }
                                             }),
                                             {},
-                                            vw1("button", 'btnExport', "Export (Excel)", {
-                                                width: 170, on:
+                                            vw1("button", 'btnExport', "Export (โหลดเป็นไฟล์เอ๊กเซล)", {
+                                                width: 200, on:
                                                 {
                                                     onItemClick: function () {
                                                         var dataT1 = ele("dataTREE"), obj = {}
@@ -152,7 +152,7 @@ var header_ViewGRN = function () {
                                         { id: "Confirm_Receive_DateTime", header: ["Confirm Receive DateTime", { content: "textFilter" }], width: 200 },
                                         { id: "Part_No", header: ["Part No.", { content: "textFilter" }], width: 140 },
                                         { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 180 },
-                                        { id: "FG_Serial_Number", header: ["FG Serial Number", { content: "textFilter" }], width: 200 },
+                                        { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
                                         { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
                                     ],
                                     on:

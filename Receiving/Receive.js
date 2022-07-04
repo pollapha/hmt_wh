@@ -191,9 +191,9 @@ var header_Receive = function () {
                                                     {},
                                                     {
                                                         cols: [
-                                                            vw1('button', 'save', 'Save', {
+                                                            vw1('button', 'save', 'Save (บันทึก)', {
                                                                 type: 'form',
-                                                                width: 100,
+                                                                width: 120,
                                                                 on: {
                                                                     onItemClick: function () {
                                                                         var obj1 = ele('form1').getValues();
