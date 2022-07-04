@@ -84,46 +84,64 @@ if ($type <= 10) //data
 
 		$GRN_Number  = $_POST['obj'];
 
-		$sql = "SELECT
+		$mysqli->autocommit(FALSE);
+		try {
+			$sql = "SELECT
 			rh.Receiving_Header_ID,
 			sum(Qty) as Qty
 			from tbl_receiving_pre rp
 			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
 			where GRN_Number = '$GRN_Number' and status = 'COMPLETE'";
-		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-		if ($re1->num_rows == 0) {
-			throw new Exception('ไม่พบข้อมูล' . __LINE__);
-		}
-		while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
-			$Qty = $row['Qty'];
-			$Receiving_Header_ID = $row['Receiving_Header_ID'];
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Qty = $row['Qty'];
+				$Receiving_Header_ID = $row['Receiving_Header_ID'];
+			}
+
+			$sql = "UPDATE tbl_receiving_header, tbl_receiving_pre
+			set Status_Receiving = 'CANCEL', status = 'CANCEL'
+			where tbl_receiving_pre.Receiving_Header_ID = tbl_receiving_header.Receiving_Header_ID and
+			GRN_Number = '$GRN_Number' and Status_Receiving = 'PENDING' and status = 'COMPLETE';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
+			}
+
+			// $sql = "UPDATE tbl_receiving_pre trp
+			// inner join tbl_receiving_header trh on trp.Receiving_Header_ID = trh.Receiving_Header_ID
+			// set trp.status = 'CANCEL'
+			// where GRN_Number = '$GRN_Number' and trh.Status_Receiving = 'PENDING' and trp.status = 'COMPLETE';";
+			// sqlError($mysqli, __LINE__, $sql, 1);
+			// if ($mysqli->affected_rows == 0) {
+			// 	throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
+			// }
+
+			// $sql = "UPDATE tbl_receiving_pre
+			// 	set status = 'CANCEL'
+			// 	where Receiving_Header_ID = '$Receiving_Header_ID' and Status_Receiving = 'PENDING' and Status = 'COMPLETE'";
+			// sqlError($mysqli, __LINE__, $sql, 1);
+			// if ($mysqli->affected_rows == 0) {
+			// 	throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			// }
+
+			// $sql = "UPDATE tbl_transaction
+			// 	set Trans_Type = 'CANCEL'
+			// 	where Receiving_Header_ID = '$Receiving_Header_ID'";
+			// sqlError($mysqli, __LINE__, $sql, 1);
+			// if ($mysqli->affected_rows == 0) {
+			// 	throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			// }
+
+			$mysqli->commit();
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
 		}
 
-		$sql = "UPDATE tbl_receiving_header
-			set Status_Receiving = 'CANCEL'
-			where GRN_Number = '$GRN_Number'";
-		sqlError($mysqli, __LINE__, $sql, 1);
-		if ($mysqli->affected_rows == 0) {
-			throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-		}
 
-		$sql = "UPDATE tbl_receiving_pre
-			set status = 'CANCEL'
-			where Receiving_Header_ID = '$Receiving_Header_ID'";
-		sqlError($mysqli, __LINE__, $sql, 1);
-		if ($mysqli->affected_rows == 0) {
-			throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-		}
-
-		$sql = "UPDATE tbl_transaction
-			set Trans_Type = 'CANCEL'
-			where Receiving_Header_ID = '$Receiving_Header_ID'";
-		sqlError($mysqli, __LINE__, $sql, 1);
-		if ($mysqli->affected_rows == 0) {
-			throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-		}
-
-		$mysqli->commit();
 
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');

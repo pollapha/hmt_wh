@@ -132,7 +132,7 @@ var header_ViewGRN = function () {
                                             }
                                         },
                                         {
-                                            id: "icon_edit", header: "&nbsp;", width: 40, template: function (row) {
+                                            id: $n("icon_cancel"), header: "&nbsp;", width: 40, template: function (row) {
                                                 if (row.Is_Header == "YES") {
                                                     return "<span style='cursor:pointer' class='webix_icon fa-ban'></span>";
                                                 }
