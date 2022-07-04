@@ -115,6 +115,14 @@ if ($type <= 10) //data
 			throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 		}
 
+		$sql = "UPDATE tbl_transaction
+			set Trans_Type = 'CANCEL'
+			where Receiving_Header_ID = '$Receiving_Header_ID'";
+		sqlError($mysqli, __LINE__, $sql, 1);
+		if ($mysqli->affected_rows == 0) {
+			throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+		}
+
 		$mysqli->commit();
 
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
