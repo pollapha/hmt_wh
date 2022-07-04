@@ -29,6 +29,7 @@ if ($type <= 10) //data
 	if ($type == 1) {
 		$sql = "SELECT trh.GRN_Number,
 		tiv.Package_Number,
+		tpm.Part_No,
 		tiv.FG_Serial_Number,
 		tiv.Qty,
 		tlm.Location_Code,
@@ -36,8 +37,9 @@ if ($type <= 10) //data
 		Pick_Number,
 		Pick_Status
 		from tbl_inventory tiv
-		left join tbl_receiving_header trh on tiv.Receiving_Header_ID = trh.Receiving_Header_ID
 		left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID
+		inner join tbl_receiving_header trh on tiv.Receiving_Header_ID = trh.Receiving_Header_ID
+		inner join tbl_part_master tpm on tiv.Part_ID = tpm.Part_ID
 		where tiv.Area = 'Storage';";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
