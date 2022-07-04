@@ -37,7 +37,8 @@ if ($type <= 10) //data
 		Pick_Status
 		from tbl_inventory tiv
 		left join tbl_receiving_header trh on tiv.Receiving_Header_ID = trh.Receiving_Header_ID
-		left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID;";
+		left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID
+		where tiv.Area = 'Storage';";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
