@@ -108,6 +108,8 @@ var header_ConfirmGRN = function () {
                                                                                 ajax(fd, obj, 41, function (json) {
                                                                                     ele('GRN_Number').setValue('');
                                                                                     ele('confirm').hide();
+                                                                                    ele('dataT1').clearAll();
+                                                                                    
                                                                                 }, null,
                                                                                     function (json) {
                                                                                         //ele('find').callEvent("onItemClick", []);
