@@ -105,8 +105,7 @@ if ($type <= 10) //data
 			}
 			
 			$sql = "SELECT
-			Area,
-			Location_ID
+			Area
 			from tbl_inventory
 			where Receiving_Header_ID = '$Receiving_Header_ID'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -115,13 +114,13 @@ if ($type <= 10) //data
 			}
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
 				$Area_receive = $row['Area'];
-				$Location_ID_Receive = $row['Location_ID'];
 			}
 
 			//อัพเดท Area ใน tbl_inventory
 			$sql = "UPDATE tbl_inventory tiv
 			left join tbl_receiving_header trh on tiv.Receiving_Header_ID = trh.Receiving_Header_ID
-			set tiv.Area = 'Storage'
+			set tiv.Area = 'Storage',
+			tiv.Location_ID = '$Location_ID'
 			where tiv.Receiving_Header_ID = '$Receiving_Header_ID' and tiv.Package_Number = '$Package_Number' and trh.Status_Receiving = 'COMPLETE';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
@@ -134,7 +133,7 @@ if ($type <= 10) //data
 			set From_Area = '$Area_receive',
 			To_Area = '$Area',
 			Trans_Type = 'PUT AWAY',
-			From_Loc_ID = '$Location_ID_Receive',
+			From_Loc_ID = '',
 			To_Loc_ID = '$Location_ID'
 			where ts.Receiving_Header_ID = '$Receiving_Header_ID' and ts.Package_Number = '$Package_Number' and trh.Status_Receiving = 'COMPLETE';";
 			sqlError($mysqli, __LINE__, $sql, 1);

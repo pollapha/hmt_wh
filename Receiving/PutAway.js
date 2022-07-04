@@ -172,7 +172,7 @@ var header_PutAway = function () {
                                                 { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
                                                 { id: "GRN_Number", header: ["GRN Number", { content: "textFilter" }], width: 200 },
                                                 { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
-                                                { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 150 },
+                                                { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
                                                 { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
                                                 { id: "Area", header: ["Area", { content: "textFilter" }], width: 150 },
                                                 { id: "Location_Code", header: ["Location Code", { content: "textFilter" }], width: 150 },
