@@ -61,7 +61,7 @@ if ($type <= 10) //data
 		$mysqli->autocommit(FALSE);
 		try {
 			$sql = "SELECT
-			Receiving_Header_ID
+			BIN_TO_UUID(Receiving_Header_ID,true) as Receiving_Header_ID
 			from tbl_receiving_header
 			where GRN_Number = '$GRN_Number' and Status_Receiving = 'COMPLETE'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -73,7 +73,7 @@ if ($type <= 10) //data
 			$sql = "SELECT
 			To_Area
 			from tbl_transaction
-			where Receiving_Header_ID = '$Receiving_Header_ID' 
+			where BIN_TO_UUID(Receiving_Header_ID,true) = '$Receiving_Header_ID' 
 			and Package_Number = '$Package_Number' and Trans_Type = 'PUT AWAY'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
@@ -145,7 +145,7 @@ if ($type <= 10) //data
 			}
 
 			$sql = "SELECT
-			Receiving_Header_ID
+			BIN_TO_UUID(Receiving_Header_ID,true) as Receiving_Header_ID
 			from tbl_receiving_header
 			where GRN_Number = '$GRN_Number' and Status_Receiving = 'COMPLETE'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -156,7 +156,8 @@ if ($type <= 10) //data
 
 			$sql = "SELECT
 			Location_ID
-			from tbl_inventory where Receiving_Header_ID = '$Receiving_Header_ID' and Package_Number = '$Package_Number'";
+			from tbl_inventory where BIN_TO_UUID(Receiving_Header_ID,true) = '$Receiving_Header_ID' 
+			and Package_Number = '$Package_Number'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
@@ -169,7 +170,7 @@ if ($type <= 10) //data
 			$sql = "UPDATE tbl_inventory tiv
 			set tiv.Area = '$Area',
 			tiv.Location_ID = '$Location_ID'
-			where tiv.Receiving_Header_ID = '$Receiving_Header_ID' and tiv.Package_Number = '$Package_Number'";
+			where BIN_TO_UUID(tiv.Receiving_Header_ID,true) = '$Receiving_Header_ID' and tiv.Package_Number = '$Package_Number'";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);

@@ -151,6 +151,7 @@ var header_PutAway = function () {
                                                     }),
                                                 ]
                                             },
+                                            {}
                                             
                                         ]
                                 },
