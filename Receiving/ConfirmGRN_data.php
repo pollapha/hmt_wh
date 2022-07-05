@@ -73,6 +73,27 @@ if ($type <= 10) //data
 		$mysqli->commit();
 
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+	} else if ($type == 3) {
+		$dataParams = array(
+			'obj',
+			'obj=>GRN_Number:s:0:1'
+		);
+		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
+		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
+
+			$sql = "SELECT GRN_Number,
+			date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
+			DN_Number,
+			Package_Number,
+			FG_Serial_Number,
+			Qty,
+			date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
+			FROM tbl_receiving_header rh
+			inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
+			where GRN_Number = '$GRN_Number' and Status_Receiving = 'COMPLETE' and status = 'COMPLETE'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 10 && $type <= 20) //insert
 {

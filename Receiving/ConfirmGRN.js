@@ -42,7 +42,8 @@ var header_ConfirmGRN = function () {
     };
 
     function loadData(btn) {
-        ajax(fd, {}, 2, function (json) {
+        var obj = ele('form1').getValues();
+        ajax(fd, obj, 3, function (json) {
             setTable('dataT1', json.data);
         }, btn);
     };
@@ -83,7 +84,9 @@ var header_ConfirmGRN = function () {
                                                                     setTable('dataT1', json.data);
                                                                 }, null,
                                                                     function (json) {
-                                                                        //ele('find').callEvent("onItemClick", []);
+                                                                        ele('GRN_Number').setValue('');
+                                                                        ele('confirm').hide();
+                                                                        ele('dataT1').clearAll();
                                                                     });
                                                             }
                                                         }
@@ -106,13 +109,15 @@ var header_ConfirmGRN = function () {
                                                                         callback: function (res) {
                                                                             if (res) {
                                                                                 ajax(fd, obj, 41, function (json) {
-                                                                                    ele('GRN_Number').setValue('');
+                                                                                    loadData();
                                                                                     ele('confirm').hide();
-                                                                                    ele('dataT1').clearAll();
                                                                                     
                                                                                 }, null,
                                                                                     function (json) {
-                                                                                        //ele('find').callEvent("onItemClick", []);
+                                                                                        loadData();
+                                                                                        ele('GRN_Number').setValue('');
+                                                                                        ele('confirm').hide();
+                                                                                        ele('dataT1').clearAll();
                                                                                     });
                                                                             }
                                                                             ele('confirm').show();
