@@ -126,7 +126,7 @@ if ($type <= 10) //data
 			}
 
 
-			$sp_trans = "CALL SP_Transaction_Save('IN','$GRN_Number','','','$cBy');";
+			$sp_trans = "CALL SP_Transaction_Save('IN','$GRN_Number','','','$cBy','','');";
 
 			// echo $sp_trans;exit();
 
