@@ -46,9 +46,6 @@ var header_PutAway = function () {
         var obj = ele('form1').getValues();
         ajax(fd, obj, 1, function (json) {
             setTable('dataT1', json.data);
-            ele('GRN_Number').setValue('');
-            ele('Package_Number').setValue('');
-            ele('Location_Code').setValue('');
         }, btn);
     };
 
@@ -66,7 +63,6 @@ var header_PutAway = function () {
                         view: "form",
                         id: $n("form1"),
                         on:
-
                         {
 
                             "onSubmit": function (view, e) {
@@ -75,43 +71,23 @@ var header_PutAway = function () {
 
                                     view.blur();
 
-                                    ajax(fd, ele('form1').getValues(), 1, function (json) {
-
-                                        //complete
-
-                                    }, null,
-
-                                        function (json) {
-
-                                            //error
-
-                                        });
-
                                 }
                                 if (view.config.name == 'Location_Code') {
-
                                     view.blur();
                                     var obj = ele('form1').getValues();
-                                    ajax(fd, obj, 21, function (json) {
-                                        setTable('dataT1', json.data);
-                                        ele('GRN_Number').setValue('');
-                                        ele('Package_Number').setValue('');
-                                        ele('Location_Code').setValue('');
+                                    ajax(fd, obj, 2, function (json) {
+                                        loadData();
                                         webix.UIManager.setFocus(ele('GRN_Number'));
-
                                     }
                                         , null,
 
                                         function (json) {
-
-                                            //error
-
+                                            loadData();
+                                            ele('GRN_Number').setValue('');
+                                            ele('Package_Number').setValue('');
+                                            ele('Location_Code').setValue('');
+                                            webix.UIManager.setFocus(ele('GRN_Number'));
                                         });
-                                    ele('GRN_Number').setValue('');
-                                    ele('Package_Number').setValue('');
-                                    ele('Location_Code').setValue('');
-                                    webix.UIManager.setFocus(ele('GRN_Number'));
-
                                 }
 
                                 else if (webix.UIManager.getNext(view).config.type == 'line') {
@@ -138,21 +114,43 @@ var header_PutAway = function () {
                                         [
                                             {
                                                 cols: [
-                                                    vw1("text", 'GRN_Number', "GRN Number", {
-                                                        //required: true, suggest: fd + "?type=1", width: 250,
-                                                    }),
-                                                    vw1("text", 'Package_Number', "Package Number", {
-                                                        //required: true, suggest: fd + "?type=1", width: 250,
-                                                    }),
-                                                    vw1("text", 'Location_Code', "Location Code", {
-                                                        //required: true, suggest: fd + "?type=1", width: 250,
-                                                    }),
+                                                    vw1("text", 'GRN_Number', "GRN Number", {}),
+                                                    vw1("text", 'Package_Number', "Package Number", {}),
+                                                    vw1("text", 'Location_Code', "Location Code", {}),
                                                 ]
 
+                                            },
+
+                                            {
+                                                rows: [
+                                                    {},
+                                                    vw1('button', 'save', 'Save (บันทึก)', {
+                                                        type: 'form',
+                                                        width: 100,
+                                                        on: {
+                                                            onItemClick: function () {
+                                                                var obj = ele('form1').getValues();
+                                                                console.log(obj);
+                                                                ajax(fd, obj, 21, function (json) {
+                                                                    loadData();
+                                                                    ele('GRN_Number').setValue('');
+                                                                    ele('Package_Number').setValue('');
+                                                                    ele('Location_Code').setValue('');
+                                                                    webix.UIManager.setFocus(ele('GRN_Number'));
+                                                                }, null,
+                                                                    function (json) {
+                                                                        //ele('find').callEvent("onItemClick", []);
+                                                                    });
+                                                                webix.UIManager.setFocus(ele('GRN_Number'));
+                                                            }
+                                                        }
+                                                    }),
+                                                ]
                                             },
                                             {}
                                         ]
                                 },
+
                                 {
                                     padding: 3,
                                     cols: [

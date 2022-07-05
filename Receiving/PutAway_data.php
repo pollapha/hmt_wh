@@ -36,19 +36,99 @@ if ($type <= 10) //data
 		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
 		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
 
-		$sql = "SELECT GRN_Number,
-		Package_Number,
-		ts.Serial_Number,
-		Qty,
-		Area,
-		Location_Code
-		FROM tbl_transaction ts
-		inner join tbl_receiving_header trh on ts.Receiving_Header_ID = trh.Receiving_Header_ID
-		left join tbl_location_master tlm on ts.To_Loc_ID = tlm.Location_ID
-		where GRN_Number = '$GRN_Number' and Package_Number = '$Package_Number';";
+		$sql = "SELECT trh.GRN_Number,
+		tiv.Package_Number,
+		tiv.FG_Serial_Number,
+		tiv.Qty,
+		tiv.Area,
+		tlm.Location_Code
+		FROM tbl_inventory tiv
+		inner join tbl_receiving_header trh on tiv.Receiving_Header_ID = trh.Receiving_Header_ID
+		left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID
+		where trh.GRN_Number = '$GRN_Number' and tiv.Package_Number = '$Package_Number';";
+
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+	} else if ($type == 2) {
+		$dataParams = array(
+			'obj',
+			'obj=>GRN_Number:s:0:1',
+			'obj=>Package_Number:s:0:1',
+			'obj=>Location_Code:s:0:1',
+		);
+		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
+		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
+
+		$mysqli->autocommit(FALSE);
+		try {
+			$sql = "SELECT
+			Receiving_Header_ID
+			from tbl_receiving_header
+			where GRN_Number = '$GRN_Number' and Status_Receiving = 'COMPLETE'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			$Receiving_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Receiving_Header_ID'];
+
+			$sql = "SELECT
+			Area
+			from tbl_inventory
+			where Receiving_Header_ID = '$Receiving_Header_ID' 
+			and Package_Number = '$Package_Number' and Area = 'Storage'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows > 0) {
+				throw new Exception('GRN นี้ทำการ Put away ไปเรียบร้อยแล้ว' . __LINE__);
+			}
+
+			$sql = "SELECT
+			Area
+			from tbl_inventory
+			where Receiving_Header_ID = '$Receiving_Header_ID' 
+			and Package_Number = '$Package_Number' and Area = 'Received'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+
+			$sql = "SELECT
+			Location_ID
+			from tbl_location_master where Location_Code = '$Location_Code'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+
+			$sql = "SELECT
+			Location_ID,
+			Area
+			from tbl_location_master where Location_Code = '$Location_Code' and Area = 'Storage';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('Location นี้ไม่อยู่ใน Area Storage' . __LINE__);
+			}
+
+			$mysqli->commit();
+
+			$sql = "SELECT trh.GRN_Number,
+		tiv.Package_Number,
+		tiv.FG_Serial_Number,
+		tiv.Qty,
+		tiv.Area,
+		tlm.Location_Code
+		FROM tbl_inventory tiv
+		inner join tbl_receiving_header trh on tiv.Receiving_Header_ID = trh.Receiving_Header_ID
+		left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID
+		where trh.GRN_Number = '$GRN_Number' and tiv.Package_Number = '$Package_Number';";
+
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 10 && $type <= 20) //insert
 {
@@ -71,7 +151,6 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-
 			$sql = "SELECT
 			Receiving_Header_ID
 			from tbl_receiving_header
@@ -82,6 +161,25 @@ if ($type <= 10) //data
 			}
 			$Receiving_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Receiving_Header_ID'];
 
+			$sql = "SELECT
+			Area
+			from tbl_inventory
+			where Receiving_Header_ID = '$Receiving_Header_ID' 
+			and Package_Number = '$Package_Number' and Area = 'Storage'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows > 0) {
+				throw new Exception('GRN นี้ทำการ Put away ไปเรียบร้อยแล้ว' . __LINE__);
+			}
+
+			$sql = "SELECT
+			Area
+			from tbl_inventory
+			where Receiving_Header_ID = '$Receiving_Header_ID' 
+			and Package_Number = '$Package_Number' and Area = 'Received'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
 
 			$sql = "SELECT
 			Location_ID
@@ -103,11 +201,11 @@ if ($type <= 10) //data
 				$Area = $row['Area'];
 				$Location_ID = $row['Location_ID'];
 			}
-			
+
 			$sql = "SELECT
 			Area
 			from tbl_inventory
-			where Receiving_Header_ID = '$Receiving_Header_ID'";
+			where Receiving_Header_ID = '$Receiving_Header_ID' ";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -121,48 +219,42 @@ if ($type <= 10) //data
 			left join tbl_receiving_header trh on tiv.Receiving_Header_ID = trh.Receiving_Header_ID
 			set tiv.Area = 'Storage',
 			tiv.Location_ID = '$Location_ID'
-			where tiv.Receiving_Header_ID = '$Receiving_Header_ID' and tiv.Package_Number = '$Package_Number' and trh.Status_Receiving = 'COMPLETE';";
+			where tiv.Receiving_Header_ID = '$Receiving_Header_ID' and tiv.Package_Number = '$Package_Number' 
+			and trh.Status_Receiving = 'COMPLETE' and tiv.Area = 'Received';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-			//อัพเดท tbl_transaction
-			$sql = "UPDATE tbl_transaction ts
-			left join tbl_receiving_header trh on ts.Receiving_Header_ID = trh.Receiving_Header_ID
-			set From_Area = '$Area_receive',
-			To_Area = '$Area',
-			Trans_Type = 'PUT AWAY',
-			From_Loc_ID = '',
-			To_Loc_ID = '$Location_ID'
-			where ts.Receiving_Header_ID = '$Receiving_Header_ID' and ts.Package_Number = '$Package_Number' and trh.Status_Receiving = 'COMPLETE';";
-			sqlError($mysqli, __LINE__, $sql, 1);
-			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			$sql = "CALL SP_Transaction_Save('PUT AWAY','$GRN_Number','$Package_Number','','$cBy','N/A','$Location_Code');";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			// echo $sp_trans;exit();
+			//exit($sp_trans);
+			if (!$re1) {
+
+				throw new Exception('ERROR, SP');
+			} else {
+
+				$row = $re1->fetch_array(MYSQLI_NUM);
+
+				$sp_status = $row[0];
+
+				$sp_ms = $row[1];
+
+				if ($sp_status == '0') {
+
+					throw new Exception($sp_ms);
+				} else {
+				}
 			}
-			
 
 			$mysqli->commit();
 
-			$sql = "SELECT GRN_Number,
-			Package_Number,
-			ts.Serial_Number,
-			Qty,
-			Area,
-			Location_Code
-			FROM tbl_transaction ts
-			inner join tbl_receiving_header trh on ts.Receiving_Header_ID = trh.Receiving_Header_ID
-			left join tbl_location_master tlm on ts.To_Loc_ID = tlm.Location_ID
-			where GRN_Number = '$GRN_Number' and Package_Number = '$Package_Number';";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 		} catch (Exception $e) {
 			$mysqli->rollback();
 			closeDBT($mysqli, 2, $e->getMessage());
 		}
-
-
-		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 30 && $type <= 40) //delete
 {
