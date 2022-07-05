@@ -124,7 +124,7 @@ if ($type <= 10) //data
 		try {
 
 			$sql = "SELECT
-			Location_ID
+			BIN_TO_UUID(Location_ID,true) as Location_ID
 			from tbl_location_master where Location_Code = '$Location_Code' and Area = 'Received';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows > 0) {
@@ -132,7 +132,7 @@ if ($type <= 10) //data
 			}
 
 			$sql = "SELECT
-			Location_ID,
+			BIN_TO_UUID(Location_ID,true) as Location_ID,
 			Area
 			from tbl_location_master where Location_Code = '$Location_Code'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -155,7 +155,7 @@ if ($type <= 10) //data
 			$Receiving_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Receiving_Header_ID'];
 
 			$sql = "SELECT
-			Location_ID
+			BIN_TO_UUID(Location_ID,true) as Location_ID
 			from tbl_inventory where BIN_TO_UUID(Receiving_Header_ID,true) = '$Receiving_Header_ID' 
 			and Package_Number = '$Package_Number'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -169,7 +169,9 @@ if ($type <= 10) //data
 			//อัพเดท Area ใน tbl_inventory
 			$sql = "UPDATE tbl_inventory tiv
 			set tiv.Area = '$Area',
-			tiv.Location_ID = '$Location_ID'
+			tiv.Location_ID = UUID_TO_BIN('$Location_ID',true),
+			tiv.Last_Updated_DateTime = now(),
+			tiv.Updated_By_ID = $cBy
 			where BIN_TO_UUID(tiv.Receiving_Header_ID,true) = '$Receiving_Header_ID' and tiv.Package_Number = '$Package_Number'";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
@@ -178,7 +180,7 @@ if ($type <= 10) //data
 
 			$sql = "SELECT
 			Location_Code
-			from tbl_location_master where Location_ID = '$Old_Location_ID'";
+			from tbl_location_master where BIN_TO_UUID(Location_ID,true) = '$Old_Location_ID'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
