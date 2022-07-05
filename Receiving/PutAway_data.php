@@ -97,7 +97,7 @@ if ($type <= 10) //data
 			from tbl_location_master where Location_Code = '$Location_Code'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
 			}
 
 			$sql = "SELECT
@@ -161,64 +161,52 @@ if ($type <= 10) //data
 			}
 			$Receiving_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Receiving_Header_ID'];
 
-			$sql = "SELECT
-			Area
-			from tbl_inventory
-			where Receiving_Header_ID = '$Receiving_Header_ID' 
-			and Package_Number = '$Package_Number' and Area = 'Storage'";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows > 0) {
-				throw new Exception('GRN นี้ทำการ Put away ไปเรียบร้อยแล้ว' . __LINE__);
-			}
+			// $sql = "SELECT
+			// Area
+			// from tbl_inventory
+			// where Receiving_Header_ID = '$Receiving_Header_ID' 
+			// and Package_Number = '$Package_Number' and Area = 'Storage'";
+			// $re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			// if ($re1->num_rows > 0) {
+			// 	throw new Exception('GRN นี้ทำการ Put away ไปเรียบร้อยแล้ว' . __LINE__);
+			// }
 
-			$sql = "SELECT
-			Area
-			from tbl_inventory
-			where Receiving_Header_ID = '$Receiving_Header_ID' 
-			and Package_Number = '$Package_Number' and Area = 'Received'";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่พบข้อมูล' . __LINE__);
-			}
+			// $sql = "SELECT
+			// Area
+			// from tbl_inventory
+			// where Receiving_Header_ID = '$Receiving_Header_ID' 
+			// and Package_Number = '$Package_Number' and Area = 'Received'";
+			// $re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			// if ($re1->num_rows == 0) {
+			// 	throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			// }
+
+			// $sql = "SELECT
+			// Location_ID
+			// from tbl_location_master where Location_Code = '$Location_Code'";
+			// $re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			// if ($re1->num_rows == 0) {
+			// 	throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			// }
 
 			$sql = "SELECT
 			Location_ID
-			from tbl_location_master where Location_Code = '$Location_Code'";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่พบข้อมูล' . __LINE__);
-			}
-
-			$sql = "SELECT
-			Location_ID,
-			Area
 			from tbl_location_master where Location_Code = '$Location_Code' and Area = 'Storage';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('Location นี้ไม่อยู่ใน Area Storage' . __LINE__);
 			}
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
-				$Area = $row['Area'];
 				$Location_ID = $row['Location_ID'];
-			}
-
-			$sql = "SELECT
-			Area
-			from tbl_inventory
-			where Receiving_Header_ID = '$Receiving_Header_ID' ";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่พบข้อมูล' . __LINE__);
-			}
-			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
-				$Area_receive = $row['Area'];
 			}
 
 			//อัพเดท Area ใน tbl_inventory
 			$sql = "UPDATE tbl_inventory tiv
 			left join tbl_receiving_header trh on tiv.Receiving_Header_ID = trh.Receiving_Header_ID
 			set tiv.Area = 'Storage',
-			tiv.Location_ID = '$Location_ID'
+			tiv.Location_ID = '$Location_ID',
+			tiv.Last_Updated_DateTime = now(),
+			tiv.Updated_By_ID = $cBy
 			where tiv.Receiving_Header_ID = '$Receiving_Header_ID' and tiv.Package_Number = '$Package_Number' 
 			and trh.Status_Receiving = 'COMPLETE' and tiv.Area = 'Received';";
 			sqlError($mysqli, __LINE__, $sql, 1);

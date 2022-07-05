@@ -77,15 +77,15 @@ var header_PutAway = function () {
                                     var obj = ele('form1').getValues();
                                     ajax(fd, obj, 2, function (json) {
                                         loadData();
-                                        webix.UIManager.setFocus(ele('GRN_Number'));
+                                        ele('save').show();
                                     }
                                         , null,
 
                                         function (json) {
-                                            loadData();
                                             ele('GRN_Number').setValue('');
                                             ele('Package_Number').setValue('');
                                             ele('Location_Code').setValue('');
+                                            ele('dataT1').clearAll();
                                             webix.UIManager.setFocus(ele('GRN_Number'));
                                         });
                                 }
@@ -114,19 +114,19 @@ var header_PutAway = function () {
                                         [
                                             {
                                                 cols: [
-                                                    vw1("text", 'GRN_Number', "GRN Number", {}),
-                                                    vw1("text", 'Package_Number', "Package Number", {}),
-                                                    vw1("text", 'Location_Code', "Location Code", {}),
+                                                    vw1("text", 'GRN_Number', "GRN Number", {width: 200}),
+                                                    vw1("text", 'Package_Number', "Package Number", {width: 200}),
+                                                    vw1("text", 'Location_Code', "Location Code", {width: 200}),
                                                 ]
 
                                             },
-
                                             {
                                                 rows: [
                                                     {},
                                                     vw1('button', 'save', 'Save (บันทึก)', {
                                                         type: 'form',
                                                         width: 100,
+                                                        hidden:1,
                                                         on: {
                                                             onItemClick: function () {
                                                                 var obj = ele('form1').getValues();
@@ -139,7 +139,11 @@ var header_PutAway = function () {
                                                                     webix.UIManager.setFocus(ele('GRN_Number'));
                                                                 }, null,
                                                                     function (json) {
-                                                                        //ele('find').callEvent("onItemClick", []);
+                                                                        ele('GRN_Number').setValue('');
+                                                                        ele('Package_Number').setValue('');
+                                                                        ele('Location_Code').setValue('');
+                                                                        ele('dataT1').clearAll();
+                                                                        webix.UIManager.setFocus(ele('GRN_Number'));
                                                                     });
                                                                 webix.UIManager.setFocus(ele('GRN_Number'));
                                                             }
@@ -147,7 +151,7 @@ var header_PutAway = function () {
                                                     }),
                                                 ]
                                             },
-                                            {}
+                                            
                                         ]
                                 },
 
