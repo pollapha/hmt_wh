@@ -154,33 +154,30 @@ if ($type <= 10) //data
 			}
 			$Receiving_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Receiving_Header_ID'];
 
+			$sql = "SELECT
+			Location_ID
+			from tbl_inventory where Receiving_Header_ID = '$Receiving_Header_ID' and Package_Number = '$Package_Number'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Old_Location_ID = $row['Location_ID'];
+			}
+
 			//อัพเดท Area ใน tbl_inventory
 			$sql = "UPDATE tbl_inventory tiv
-			inner join tbl_transaction ts on tiv.Receiving_Header_ID = ts.Receiving_Header_ID
 			set tiv.Area = '$Area',
 			tiv.Location_ID = '$Location_ID'
-			where tiv.Receiving_Header_ID = '$Receiving_Header_ID' and tiv.Package_Number = '$Package_Number' 
-			and tiv.Area = 'Storage' and Trans_Type = 'PUT AWAY';";
+			where tiv.Receiving_Header_ID = '$Receiving_Header_ID' and tiv.Package_Number = '$Package_Number'";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-			//select เอา location เดิม
-			$sql = "SELECT
-			To_Loc_ID
-			from tbl_transaction
-			where Receiving_Header_ID = '$Receiving_Header_ID' 
-			and Package_Number = '$Package_Number' and Trans_Type = 'PUT AWAY'";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่พบข้อมูล' . __LINE__);
-			}
-			$To_Loc_ID = $re1->fetch_array(MYSQLI_ASSOC)['To_Loc_ID'];
-
 			$sql = "SELECT
 			Location_Code
-			from tbl_location_master where Location_ID = '$To_Loc_ID'";
+			from tbl_location_master where Location_ID = '$Old_Location_ID'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
@@ -188,6 +185,7 @@ if ($type <= 10) //data
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
 				$From_Location_Code = $row['Location_Code'];
 			}
+
 
 			$sql = "CALL SP_Transaction_Save('MOVE','$GRN_Number','$Package_Number','','$cBy','$From_Location_Code','$Location_Code');";
 			//exit($sql);
