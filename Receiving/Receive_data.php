@@ -231,7 +231,7 @@ if ($type <= 10) //data
 		$mysqli->autocommit(FALSE);
 		try {
 			$sql = "SELECT
-			rh.Receiving_Header_ID,
+			BIN_TO_UUID(rh.Receiving_Header_ID,true) as Receiving_Header_ID,
 			sum(Qty) as Qty
 			from tbl_receiving_pre rp
 			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
@@ -255,7 +255,8 @@ if ($type <= 10) //data
 
 			$sql = "UPDATE tbl_receiving_pre
 			set status = 'COMPLETE'
-			where Receiving_Header_ID = '$Receiving_Header_ID'";
+			where BIN_TO_UUID(Receiving_Header_ID,true) = '$Receiving_Header_ID' and status = 'PENDING'";
+			//exit($sql);
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
