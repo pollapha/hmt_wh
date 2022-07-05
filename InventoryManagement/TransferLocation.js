@@ -116,9 +116,9 @@ var header_TransferLocation = function () {
                                         [
                                             {
                                                 cols: [
-                                                    vw1("text", 'GRN_Number', "GRN Number", {}),
-                                                    vw1("text", 'Package_Number', "Package Number", {}),
-                                                    vw1("text", 'Location_Code', "Location Code", { hidden: 1 }),
+                                                    vw1("text", 'GRN_Number', "GRN Number", {width: 200,}),
+                                                    vw1("text", 'Package_Number', "Package Number", {width: 200,}),
+                                                    vw1("text", 'Location_Code', "Location Code", { width: 200, hidden: 1 }),
                                                 ]
 
                                             },
