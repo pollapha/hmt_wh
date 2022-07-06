@@ -28,7 +28,7 @@ if ($type <= 10) //data
 {
 	if ($type == 1) {
 
-		$sql = "SELECT Header_DateTime,
+		$sql = "SELECT date_format(Header_DateTime, '%d/%m/%y %H:%i') AS Header_DateTime,
 		DN_Number,
 		DN_Date_Text,
 		Package_Number,
@@ -36,7 +36,7 @@ if ($type <= 10) //data
 		FG_Date_Text,
 		Part_No,
 		BIN_TO_UUID(DN_ID,true) as DN_ID,
-		Creation_Date,
+		date_format(Creation_Date, '%d/%m/%y') AS Creation_Date,
 		Receive_Status
 		FROM tbl_dn_order";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -103,7 +103,7 @@ if ($type <= 10) //data
 
 			$mysqli->commit();
 
-			$sql = "SELECT Header_DateTime,
+			$sql = "SELECT date_format(Header_DateTime, '%d/%m/%y %H:%i') AS Header_DateTime,
 			DN_Number,
 			DN_Date_Text,
 			Package_Number,
@@ -111,7 +111,7 @@ if ($type <= 10) //data
 			FG_Date_Text,
 			BIN_TO_UUID(DN_ID,true) as DN_ID,
 			Part_No,
-			Creation_Date,
+			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date,
 			Receive_Status
 			FROM tbl_dn_order";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -203,14 +203,15 @@ if ($type <= 10) //data
 					closeDB($mysqli);
 				}
 
-				$sql = "SELECT Header_DateTime,
+				$sql = "SELECT 
+					date_format(Header_DateTime, '%d/%m/%y %H:%i') AS Header_DateTime,
 					DN_Number,
 					DN_Date_Text,
 					Package_Number,
 					FG_Serial_Number,
 					FG_Date_Text,
 					Part_No,
-					Creation_Date,
+					date_format(Creation_Date, '%d/%m/%y') AS Creation_Date,
 					Receive_Status
 					FROM tbl_dn_order";
 				$re1 = sqlError($mysqli, __LINE__, $sql, 1);

@@ -33,7 +33,7 @@ if ($type <= 10) //data
 		Package_Length_MM,  
 		Package_Height_MM,
 		Status,
-		Creation_Date
+		date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 		FROM tbl_package_master";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
@@ -98,7 +98,7 @@ if ($type <= 10) //data
 			Package_Length_MM,  
 			Package_Height_MM,
 			Status,
-			Creation_Date
+			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 			FROM tbl_package_master";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
@@ -156,7 +156,7 @@ if ($type <= 10) //data
 			Package_Length_MM,  
 			Package_Height_MM,
 			Status,
-			Creation_Date
+			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 			FROM tbl_package_master";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			$data =  jsonRow($re1, true, 0);

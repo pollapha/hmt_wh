@@ -30,7 +30,7 @@ if ($type <= 10) //data
 		$sql = "SELECT Customer_Code,
 		Customer_Name, 
 		Status,
-		Creation_Date
+		date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 		FROM tbl_customer_master";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));

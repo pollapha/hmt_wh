@@ -36,7 +36,7 @@ if ($type <= 10) //data
 		Weight_Package_Part,
 		TAST_No,
 		Active,
-		Creation_Date
+		date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 		FROM tbl_part_master";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
@@ -122,11 +122,7 @@ if ($type <= 10) //data
 			Weight_Package_Part,
 			TAST_No,
 			Active,
-			Creation_Date,
-			Created_By_ID,
-			Last_Updated_Date,
-			Last_Updated_DateTime,
-			Updated_By_ID
+			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 			FROM tbl_part_master";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
@@ -190,11 +186,7 @@ if ($type <= 10) //data
 			Weight_Package_Part,
 			TAST_No,
 			Active,
-			Creation_Date,
-			Created_By_ID,
-			Last_Updated_Date,
-			Last_Updated_DateTime,
-			Updated_By_ID
+			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 			FROM tbl_part_master";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			$data =  jsonRow($re1, true, 0);
