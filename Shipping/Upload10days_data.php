@@ -33,19 +33,30 @@ include('../php/connection.php');
 if ($type <= 10) //data
 {
 	if ($type == 1) {
-		// $sql = "SELECT date_format(Header_DateTime, '%d/%m/%y %H:%i') AS Header_DateTime,
-		// DN_Number,
-		// DN_Date_Text,
-		// Package_Number,
-		// FG_Serial_Number,
-		// FG_Date_Text,
-		// Part_No,
-		// BIN_TO_UUID(DN_ID,true) as DN_ID,
-		// date_format(Creation_Date, '%d/%m/%y') AS Creation_Date,
-		// Receive_Status
-		// FROM tbl_dn_order";
-		// $re1 = sqlError($mysqli, __LINE__, $sql, 1);
-		// closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		$sql = "SELECT Customer,
+		Dock,
+		Sale_Part,
+		Delivery_Date,
+		Bin_No,
+		Qty,
+		Order_No,
+		Attri_Info,
+		Plan_Delivery_Date,
+		Plan_Bin_No,
+		Part_No,
+		KanbanID,
+		SNP,
+		Box_Type,
+		Part_Name,
+		Creation_DateTime,
+		Created_By_ID,
+		Creation_Pick_DateTime,
+		Created_Pick_By_ID,
+		Creation_Ship_DateTime,
+		Created_Ship_By_ID
+		FROM tbl_10day_order";
+		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 10 && $type <= 20) //insert
 {
@@ -160,15 +171,47 @@ if ($type <= 10) //data
 					$count = 0;
 					foreach ($data as $row) {
 						if ($count > 0) {
-							// $fullname = $row[0];
-							// $email = $row[1];
-							// $phone = $row[2];
+							//$Part_No = explode("/", trim($row[10]));
+							//exit($row[10] . ' ' . $Part_No[0]);
+							//$Part_ID = getPartID($mysqli, $Part_No);
+							//$Part_Name = getPartName($mysqli, $Part_No);
 
-							// $sqlArray[] = array(
-							// 	'fullname' => stringConvert($fullname),
-							// 	'email' => stringConvert($email),
-							// 	'phone' => stringConvert($phone),
-							// );
+							$sqlArray[] = array(
+								'Customer' => stringConvert($row[0]),
+								'Dock' => stringConvert($row[1]),
+								'Sale_Part' => stringConvert($row[2]),
+								'Delivery_Date' => convertDate($row[3]),
+								'Bin_No' => stringConvert($row[4]),
+								'Qty' => $row[5],
+								'Order_No' => stringConvert($row[6]),
+								'Attri_Info' => stringConvert($row[7]),
+								'Plan_Delivery_Date' => convertDate($row[8]),
+								'Plan_Bin_No' => stringConvert($row[9]),
+								'Part_No' => stringConvert($row[10]),
+								'KanbanID' => stringConvert($row[11]),
+								'SNP' => $row[12],
+								'Box_Type' => stringConvert($row[13]),
+								//'PDS_No' => stringConvert($row[1]),
+								//'Pick_Qty' => stringConvert($row[1]),
+								//'Pick_Status' => stringConvert($row[1]),
+								//'Ship_Qty' => stringConvert($row[1]),
+								//'Ship_Status' => stringConvert($row[1]),
+								//'Slide_Status' => stringConvert($row[1]),
+								'Part_Name' => stringConvert($row[14]),
+								//'Part_No' => stringConvert($Part_No),
+								//'Part_ID' => 'uuid_to_bin("' . $Part_ID . '",true)',
+								//'Part_Name' => stringConvert($Part_Name),
+								'Creation_DateTime' => 'now()',
+								'Created_By_ID' => $cBy,
+								'Creation_Pick_DateTime' => 'now()',
+								'Created_Pick_By_ID' => $cBy,
+								'Creation_Ship_DateTime' => 'now()',
+								'Created_Ship_By_ID' => $cBy,
+								'File_Name' => stringConvert($fileName)
+
+
+
+							);
 						} else {
 							$count = 1;
 						}
@@ -181,7 +224,7 @@ if ($type <= 10) //data
 
 						for ($i = 0, $len = count($sqlChunk); $i < $len; $i++) {
 							$sqlValues = prepareValueInsert($sqlChunk[$i]);
-							//$sql = "INSERT IGNORE INTO students $sqlName VALUES $sqlValues";
+							$sql = "INSERT IGNORE INTO tbl_10day_order $sqlName VALUES $sqlValues";
 							sqlError($mysqli, __LINE__, $sql, 1, 0);
 							$total += $mysqli->affected_rows;
 						}
@@ -195,6 +238,31 @@ if ($type <= 10) //data
 						closeDB($mysqli);
 					}
 				}
+
+				$sql = "SELECT Customer,
+				Dock,
+				Sale_Part,
+				Delivery_Date,
+				Bin_No,
+				Qty,
+				Order_No,
+				Attri_Info,
+				Plan_Delivery_Date,
+				Plan_Bin_No,
+				Part_No,
+				KanbanID,
+				SNP,
+				Box_Type,
+				Part_Name,
+				Creation_DateTime,
+				Created_By_ID,
+				Creation_Pick_DateTime,
+				Created_Pick_By_ID,
+				Creation_Ship_DateTime,
+				Created_Ship_By_ID
+				FROM tbl_10day_order";
+				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+				closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 			} catch (Exception $e) {
 				$mysqli->rollback();
 				echo '{"status":"server","mms":"' . $e->getMessage() . '","sname":[]}';

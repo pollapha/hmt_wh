@@ -256,57 +256,62 @@ var header_Upload10days = function () {
                                         // })
                                     ]
                             },
-                            // {
-                            //     cols: [
-                            //         {
-                            //             view: "datatable", id: $n("dataT1"), navigation: true, select: "row", editaction: "custom",
-                            //             resizeColumn: true, autoheight: false, multiselect: true, hover: "myhover",
-                            //             threeState: true, rowLineHeight: 25, rowHeight: 25,
-                            //             datatype: "json", headerRowHeight: 25, leftSplit: 4, editable: true,
-                            //             scheme:
-                            //             {
-                            //                 $change: function (obj) {
-                            //                     var css = {};
-                            //                     obj.$cellCss = css;
-                            //                 }
-                            //             },
-                            //             columns: [
-                            //                 {
-                            //                     id: "icon_edit", header: "&nbsp;", width: 40, template: function (row) {
-                            //                         return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
-                            //                     }
-                            //                 },
-                            //                 { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
-                            //                 { id: "Header_DateTime", header: ["Header DateTime", { content: "textFilter" }], width: 200 },
-                            //                 { id: "DN_Number", header: ["DN Number", { content: "textFilter" }], width: 150 },
-                            //                 { id: "DN_Date_Text", header: ["DN Date", { content: "textFilter" }], width: 100 },
-                            //                 { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
-                            //                 { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
-                            //                 { id: "FG_Date_Text", header: ["FG Date", { content: "textFilter" }], width: 200 },
-                            //                 { id: "Part_No", header: ["Part No", { content: "textFilter" }], width: 150 },
-                            //                 { id: "Receive_Status", header: ["Receive Status", { content: "textFilter" }], width: 100 },
-                            //                 { id: "Creation_Date", header: ["Creation Date", { content: "textFilter" }], width: 150 },
-
-                            //             ],
-                            //             onClick:
-                            //             {
-                            //                 "fa-pencil": function (e, t) {
-                            //                     console.log(ele('win_edit').show());
-                            //                     var row = this.getItem(t);
-                            //                     console.log(row);
-                            //                     console.log(ele('win_edit_form').setValues(row));
-                            //                 },
-                            //             },
-                            //             on: {
-                            //                 // "onEditorChange": function (id, value) {
-                            //                 // }
-                            //                 "onItemClick": function (id) {
-                            //                     this.editRow(id);
-                            //                 }
-                            //             }
-                            //         },
-                            //     ],
-                            // },
+                            {
+                                cols: [
+                                    {
+                                        view: "datatable", id: $n("dataT1"), navigation: true, select: "row", editaction: "custom",
+                                        resizeColumn: true, autoheight: false, multiselect: true, hover: "myhover",
+                                        threeState: true, rowLineHeight: 25, rowHeight: 25,
+                                        datatype: "json", headerRowHeight: 25, leftSplit: 4, editable: true,
+                                        scheme:
+                                        {
+                                            $change: function (obj) {
+                                                var css = {};
+                                                obj.$cellCss = css;
+                                            }
+                                        },
+                                        columns: [
+                                            {
+                                                id: "icon_edit", header: "&nbsp;", width: 40, template: function (row) {
+                                                    return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
+                                                }
+                                            },
+                                            { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
+                                            { id: "Customer", header: ["Customer", { content: "textFilter" }], width: 200 },
+                                            { id: "Dock", header: ["Dock", { content: "textFilter" }], width: 150 },
+                                            { id: "Sale_Part", header: ["Sale_Part", { content: "textFilter" }], width: 200 },
+                                            { id: "Delivery_Date", header: ["Delivery_Date", { content: "textFilter" }], width: 200 },
+                                            { id: "Bin_No", header: ["Bin_No", { content: "textFilter" }], width: 200 },
+                                            { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 200 },
+                                            { id: "Order_No", header: ["Order_No", { content: "textFilter" }], width: 200 },
+                                            { id: "Attri_Info", header: ["Attri_Info", { content: "textFilter" }], width: 200 },
+                                            { id: "Plan_Delivery_Date", header: ["Plan_Delivery_Date", { content: "textFilter" }], width: 200 },
+                                            { id: "Plan_Bin_No", header: ["Plan_Bin_No", { content: "textFilter" }], width: 200 },
+                                            { id: "Part_No", header: ["Part_No", { content: "textFilter" }], width: 200 },
+                                            { id: "KanbanID", header: ["KanbanID", { content: "textFilter" }], width: 200 },
+                                            { id: "SNP", header: ["SNP", { content: "textFilter" }], width: 200 },
+                                            { id: "Box_Type", header: ["Box_Type", { content: "textFilter" }], width: 200 },
+                                            { id: "Part_Name", header: ["Part_Name", { content: "textFilter" }], width: 200 },
+                                        ],
+                                        onClick:
+                                        {
+                                            "fa-pencil": function (e, t) {
+                                                console.log(ele('win_edit').show());
+                                                var row = this.getItem(t);
+                                                console.log(row);
+                                                console.log(ele('win_edit_form').setValues(row));
+                                            },
+                                        },
+                                        on: {
+                                            // "onEditorChange": function (id, value) {
+                                            // }
+                                            "onItemClick": function (id) {
+                                                this.editRow(id);
+                                            }
+                                        }
+                                    },
+                                ],
+                            },
                         ]
                     },
                 ], on:
