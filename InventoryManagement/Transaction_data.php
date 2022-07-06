@@ -46,7 +46,8 @@ if ($type <= 10) //data
         (select user_fName from tbl_user tu where ts.Updated_By_ID = tu.user_id) as Updated_By
 		FROM tachi.tbl_transaction ts
 		left join tbl_receiving_header trh on ts.Receiving_Header_ID = trh.Receiving_Header_ID
-		left join tbl_part_master tpm on ts.Part_ID = tpm.Part_ID;";
+		left join tbl_part_master tpm on ts.Part_ID = tpm.Part_ID
+		order by Creation_DateTime desc;";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
