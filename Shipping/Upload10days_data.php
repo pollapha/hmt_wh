@@ -171,10 +171,11 @@ if ($type <= 10) //data
 					$count = 0;
 					foreach ($data as $row) {
 						if ($count > 0) {
-							//$Part_No = explode("/", trim($row[10]));
+							$Part_No = explode("/", trim($row[10]));
 							//exit($row[10] . ' ' . $Part_No[0]);
-							//$Part_ID = getPartID($mysqli, $Part_No);
-							//$Part_Name = getPartName($mysqli, $Part_No);
+							$Part_ID = getPartID($mysqli, $Part_No[0]);
+							$Part_Name = getPartName($mysqli, $Part_No[0]);
+							//exit($Part_ID . ' ' . $Part_Name);
 
 							$sqlArray[] = array(
 								'Customer' => stringConvert($row[0]),
@@ -197,10 +198,9 @@ if ($type <= 10) //data
 								//'Ship_Qty' => stringConvert($row[1]),
 								//'Ship_Status' => stringConvert($row[1]),
 								//'Slide_Status' => stringConvert($row[1]),
-								'Part_Name' => stringConvert($row[14]),
-								//'Part_No' => stringConvert($Part_No),
-								//'Part_ID' => 'uuid_to_bin("' . $Part_ID . '",true)',
-								//'Part_Name' => stringConvert($Part_Name),
+								//'Part_Name' => stringConvert($row[14]),
+								'Part_ID' => 'uuid_to_bin("' . $Part_ID . '",true)',
+								'Part_Name' => stringConvert($Part_Name),
 								'Creation_DateTime' => 'now()',
 								'Created_By_ID' => $cBy,
 								'Creation_Pick_DateTime' => 'now()',
