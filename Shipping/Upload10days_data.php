@@ -48,13 +48,20 @@ if ($type <= 10) //data
 		SNP,
 		Box_Type,
 		Part_Name,
+		PDS_No,
+		Pick_Qty,
+		Pick_Status,
+		Ship_Qty,
+		Ship_Status,
+		Slide_Status,
 		Creation_DateTime,
 		Created_By_ID,
 		Creation_Pick_DateTime,
 		Created_Pick_By_ID,
 		Creation_Ship_DateTime,
 		Created_Ship_By_ID
-		FROM tbl_10day_order";
+		FROM tbl_10day_order
+		order by Delivery_Date";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
@@ -254,13 +261,20 @@ if ($type <= 10) //data
 				SNP,
 				Box_Type,
 				Part_Name,
+				PDS_No,
+				Pick_Qty,
+				Pick_Status,
+				Ship_Qty,
+				Ship_Status,
+				Slide_Status,
 				Creation_DateTime,
 				Created_By_ID,
 				Creation_Pick_DateTime,
 				Created_Pick_By_ID,
 				Creation_Ship_DateTime,
 				Created_Ship_By_ID
-				FROM tbl_10day_order";
+				FROM tbl_10day_order
+				order by Delivery_Date";
 				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 				closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 			} catch (Exception $e) {

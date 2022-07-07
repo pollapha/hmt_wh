@@ -225,11 +225,11 @@ var header_Upload10days = function () {
                                                                     title: "กรุณายืนยัน", ok: "ใช่", cancel: "ไม่", text: "คุณต้องการบันทึกข้อมูล<br><font color='#27ae60'><b>ใช่</b></font> หรือ <font color='#3498db'><b>ไม่</b></font>",
                                                                     callback: function (res) {
                                                                         if (res) {
-                                                                            // ajax(fd, {}, 1, function (json) {
-                                                                            //     //setTable('dataT1', json.data);
-                                                                            // }, null,
-                                                                            //     function (json) {
-                                                                            //     });
+                                                                            ajax(fd, {}, 1, function (json) {
+                                                                                setTable('dataT1', json.data);
+                                                                            }, null,
+                                                                                function (json) {
+                                                                                });
                                                                         }
                                                                         var json = JSON.parse(data);
                                                                         ele("Upload").files.data.clearAll();
@@ -289,6 +289,12 @@ var header_Upload10days = function () {
                                             { id: "Plan_Bin_No", header: ["Plan Bin No.", { content: "textFilter" }], width: 120 },
                                             { id: "Part_No", header: ["Part No.", { content: "textFilter" }], width: 200 },
                                             { id: "Part_Name", header: ["Part Name", { content: "textFilter" }], width: 250 },
+                                            { id: "PDS_No", header: ["PDS No.", { content: "textFilter" }], width: 150 },
+                                            { id: "Pick_Qty", header: ["Pick Qty", { content: "textFilter" }], width: 100 },
+                                            { id: "Pick_Status", header: ["Pick Status", { content: "textFilter" }], width: 150 },
+                                            { id: "Ship_Qty", header: ["Ship Qty", { content: "textFilter" }], width: 100 },
+                                            { id: "Ship_Status", header: ["Ship Status", { content: "textFilter" }], width: 120 },
+                                            { id: "Slide_Status", header: ["Slide Status", { content: "textFilter" }], width: 120 },
                                             { id: "KanbanID", header: ["Kanban ID", { content: "textFilter" }], width: 120 },
                                             { id: "SNP", header: ["SNP", { content: "textFilter" }], width: 100 },
                                             { id: "Box_Type", header: ["Box Type", { content: "textFilter" }], width: 120 },
