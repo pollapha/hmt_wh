@@ -42,107 +42,6 @@ var header_Upload10days = function () {
         ele(tableName).filterByAll();
     };
 
-
-    //edit
-    webix.ui(
-        {
-            view: "window", id: $n("win_edit"), modal: 1,
-            head: "Edit (แก้ไขข้อมูล)", top: 50, position: "center",
-            body:
-            {
-                view: "form", scroll: false, id: $n("win_edit_form"), width: 600,
-                elements:
-                    [
-                        {
-                            cols:
-                                [
-                                    {
-                                        rows:
-                                            [
-                                                {
-                                                    cols: [
-                                                        vw1('text', 'DN_ID', 'DN ID', { labelPosition: "top", hidden: 1 }),
-                                                        vw2("datepicker", 'Header_DateTime_edit', 'Header_DateTime', "Header DateTime", { value: dayjs().format("YYYY-MM-DD"), stringResult: true, ...datatableDateFormat, required: false }),
-                                                        vw2('text', 'DN_Number_edit', 'DN_Number', 'DN Number', { labelPosition: "top" }),
-                                                    ],
-                                                },
-                                                {
-                                                    cols: [
-                                                        vw2('text', 'DN_Date_Text_edit', 'DN_Date_Text', 'DN Date Text', { labelPosition: "top" }),
-                                                        vw2('text', 'Package_Number', 'Package_Number', 'Package Number', { labelPosition: "top", required: false }),
-                                                    ],
-                                                },
-                                                {
-                                                    cols: [
-                                                        vw2('text', 'FG_Serial_Number_edit', 'FG_Serial_Number', 'Serial Number', { labelPosition: "top" }),
-                                                        vw2('text', 'FG_Date_Text_edit', 'FG_Date_Text', 'FG Date Text', { labelPosition: "top" }),
-                                                    ],
-                                                },
-                                                {
-                                                    cols: [
-                                                        vw2('text', 'Part_No_edit', 'Part_No', 'Part_No', { labelPosition: "top", required: false }),
-                                                        vw2('richselect', 'Receive_Status_edit', 'Receive_Status', 'Receive Status', {
-                                                            labelPosition: "top",
-                                                            value: 'Y', options: [
-                                                                { id: 'Y', value: "Yes" },
-                                                                { id: 'N', value: "No" },
-                                                            ]
-                                                        }),
-                                                    ],
-                                                },
-
-                                            ]
-                                    }
-                                ]
-                        },
-                        {
-                            cols:
-                                [
-                                    {},
-                                    vw1('button', 'edit', 'Save', {
-                                        type: 'form', width: 100,
-                                        on: {
-                                            onItemClick: function () {
-                                                var obj = ele('win_edit_form').getValues();
-                                                console.log(obj);
-                                                webix.confirm(
-                                                    {
-                                                        title: "กรุณายืนยัน", ok: "ใช่", cancel: "ไม่", text: "คุณต้องการบันทึกข้อมูล<br><font color='#27ae60'><b>ใช่</b></font> หรือ <font color='#3498db'><b>ไม่</b></font>",
-                                                        callback: function (res) {
-                                                            if (res) {
-                                                                ajax(fd, obj, 21, function (json) {
-                                                                    ele('win_edit').hide();
-                                                                    setTable('dataT1', json.data);
-                                                                    console.log(setTable('dataT1', json.data));
-                                                                }, null,
-                                                                    function (json) {
-                                                                        /* ele('find').callEvent("onItemClick", []); */
-                                                                    });
-                                                            }
-                                                        }
-                                                    });
-
-                                            }
-                                        }
-                                    }),
-
-                                    vw1('button', 'cancel_edit', 'Cancel', {
-                                        type: 'danger', width: 100,
-                                        on: {
-                                            onItemClick: function () {
-                                                ele('win_edit').hide();
-                                            }
-                                        }
-                                    }),
-                                ]
-                        }
-                    ],
-                rules:
-                {
-                }
-            }
-        });
-
     return {
         view: "scrollview",
         scroll: "native-y",
@@ -238,22 +137,33 @@ var header_Upload10days = function () {
                                                                         ele("save_file").hide();
                                                                     }
                                                                 });
-
-
-
                                                         }
                                                     });
                                                 });
                                             }
                                         }),
-                                        // vw1("button", 'btnExport', "Export (โหลดเป็นไฟล์เอ๊กเซล)", {
-                                        //     width: 200, on:
-                                        //     {
-                                        //         onItemClick: function () {
-                                        //             exportExcel(this);
-                                        //         }
-                                        //     }
-                                        // })
+                                        vw1("button", 'delete', "Delete (ลบ)", {
+                                            width: 150, type: 'danger', on:
+                                            {
+                                                onItemClick: function () {
+
+                                                    webix.confirm(
+                                                        {
+                                                            title: "กรุณายืนยัน", ok: "ใช่", cancel: "ไม่", text: "คุณต้องการบันทึกข้อมูล<br><font color='#27ae60'><b>ใช่</b></font> หรือ <font color='#3498db'><b>ไม่</b></font>",
+                                                            callback: function (res) {
+                                                                if (res) {
+                                                                    ajax(fd, {}, 31, function (json) {
+                                                                        setTable('dataT1', json.data);
+                                                                    }, null,
+                                                                        function (json) {
+                                                                        });
+                                                                }
+                                                            }
+                                                        });
+                                                }
+                                            }
+                                        })
+
                                     ]
                             },
                             {
@@ -271,11 +181,6 @@ var header_Upload10days = function () {
                                             }
                                         },
                                         columns: [
-                                            {
-                                                id: "icon_edit", header: "&nbsp;", width: 40, template: function (row) {
-                                                    return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
-                                                }
-                                            },
                                             { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
                                             { id: "Customer", header: ["Customer", { content: "textFilter" }], width: 100 },
                                             { id: "Dock", header: ["Dock", { content: "textFilter" }], width: 100 },
@@ -299,15 +204,6 @@ var header_Upload10days = function () {
                                             { id: "SNP", header: ["SNP", { content: "textFilter" }], width: 100 },
                                             { id: "Box_Type", header: ["Box Type", { content: "textFilter" }], width: 120 },
                                         ],
-                                        onClick:
-                                        {
-                                            "fa-pencil": function (e, t) {
-                                                console.log(ele('win_edit').show());
-                                                var row = this.getItem(t);
-                                                console.log(row);
-                                                console.log(ele('win_edit_form').setValues(row));
-                                            },
-                                        },
                                         on: {
                                             // "onEditorChange": function (id, value) {
                                             // }

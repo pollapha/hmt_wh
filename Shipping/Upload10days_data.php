@@ -61,7 +61,7 @@ if ($type <= 10) //data
 		Creation_Ship_DateTime,
 		Created_Ship_By_ID
 		FROM tbl_10day_order
-		order by Delivery_Date";
+		order by Delivery_Date, Order_No";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
@@ -75,80 +75,56 @@ if ($type <= 10) //data
 {
 	if ($_SESSION['xxxRole']->{'Upload10days'}[2] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 21) {
-
-		// $dataParams = array(
-		// 	'obj',
-		// 	'obj=>DN_ID:s:0:0',
-		// 	'obj=>Header_DateTime:s:0:0',
-		// 	'obj=>DN_Number:s:0:0',
-		// 	'obj=>DN_Date_Text:s:0:0',
-		// 	'obj=>Package_Number:s:0:0',
-		// 	'obj=>FG_Serial_Number:s:0:0',
-		// 	'obj=>FG_Date_Text:s:0:0',
-		// 	'obj=>Part_No:s:0:0',
-		// 	'obj=>Receive_Status:s:0:0',
-		// );
-		// $chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
-		// if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
-
-		// $mysqli->autocommit(FALSE);
-		// try {
-		// 	$sql = "SELECT DN_ID from tbl_dn_order where FG_Serial_Number='$FG_Serial_Number' limit 1;";
-		// 	$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-		// 	if ($re1->num_rows == 0) {
-		// 		throw new Exception('ไม่พบข้อมูล' . __LINE__);
-		// 	}
-		// 	while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
-		// 		$DN_ID = $row['DN_ID'];
-		// 	}
-
-		// 	$sql = "UPDATE tbl_dn_order 
-		// 	set 
-		// 	Header_DateTime = '$Header_DateTime',
-		// 	DN_Number = '$DN_Number',
-		// 	DN_Date_Text = '$DN_Date_Text',
-		// 	Package_Number = '$Package_Number',
-		// 	FG_Serial_Number = '$FG_Serial_Number',
-		// 	FG_Date_Text = '$FG_Date_Text',
-		// 	Part_No = '$Part_No',
-		// 	Receive_Status = '$Receive_Status',
-		// 	Creation_Date = curdate(),
-		// 	Creation_DateTime = now(),
-		// 	Created_By_ID = $cBy,
-		// 	Last_Updated_Date = curdate(),
-		// 	Last_Updated_DateTime = now(),
-		// 	Updated_By_ID = $cBy
-		// 	where DN_ID = '$DN_ID'";
-		// 	sqlError($mysqli, __LINE__, $sql, 1);
-		// 	if ($mysqli->affected_rows == 0) {
-		// 		throw new Exception('ไม่สามารถแก้ไขข้อมูลได้' . __LINE__);
-		// 	}
-
-		// 	$mysqli->commit();
-
-		// 	$sql = "SELECT date_format(Header_DateTime, '%d/%m/%y %H:%i') AS Header_DateTime,
-		// 	DN_Number,
-		// 	DN_Date_Text,
-		// 	Package_Number,
-		// 	FG_Serial_Number,
-		// 	FG_Date_Text,
-		// 	BIN_TO_UUID(DN_ID,true) as DN_ID,
-		// 	Part_No,
-		// 	date_format(Creation_Date, '%d/%m/%y') AS Creation_Date,
-		// 	Receive_Status
-		// 	FROM tbl_dn_order";
-		// 	$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-		// 	$data =  jsonRow($re1, true, 0);
-		// 	closeDBT($mysqli, 1, $data);
-		// } catch (Exception $e) {
-		// 	$mysqli->rollback();
-		// 	closeDBT($mysqli, 2, $e->getMessage());
-		// }
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 30 && $type <= 40) //delete
 {
 	if ($_SESSION['xxxRole']->{'Upload10days'}[3] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 31) {
+
+		$mysqli->autocommit(FALSE);
+		try {
+			$sql = "DELETE FROM tbl_10day_order;";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถลบข้อมูลได้' . __LINE__);
+			}
+
+			$mysqli->commit();
+			$sql = "SELECT Customer,
+				Dock,
+				Sale_Part,
+				Delivery_Date,
+				Bin_No,
+				Qty,
+				Order_No,
+				Attri_Info,
+				Plan_Delivery_Date,
+				Plan_Bin_No,
+				Part_No,
+				KanbanID,
+				SNP,
+				Box_Type,
+				Part_Name,
+				PDS_No,
+				Pick_Qty,
+				Pick_Status,
+				Ship_Qty,
+				Ship_Status,
+				Slide_Status,
+				Creation_DateTime,
+				Created_By_ID,
+				Creation_Pick_DateTime,
+				Created_Pick_By_ID,
+				Creation_Ship_DateTime,
+				Created_Ship_By_ID
+				FROM tbl_10day_order
+				order by Delivery_Date, Order_No";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 40 && $type <= 50) //save
 {
@@ -274,7 +250,7 @@ if ($type <= 10) //data
 				Creation_Ship_DateTime,
 				Created_Ship_By_ID
 				FROM tbl_10day_order
-				order by Delivery_Date";
+				order by Delivery_Date, Order_No";
 				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 				closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 			} catch (Exception $e) {
