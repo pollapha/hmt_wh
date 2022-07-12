@@ -65,37 +65,49 @@ var header_CreatePicking = function () {
                                 const propertyValues = Object.values(obj);
 
                                 if (view.config.name == 'scan') {
+
                                     view.blur();
+
                                     if (propertyValues[0].length == 16) {
+
                                         ele('scan').setValue('');
                                         ele('PDS_No').setValue(propertyValues[0]);
                                         webix.UIManager.setFocus(ele('PDS_No'));
+
                                     }
                                     else if (propertyValues[0].length == 10) {
+
                                         ele('scan').setValue('');
                                         ele('Order_No').setValue(propertyValues[0]);
                                         webix.UIManager.setFocus(ele('Order_No'));
+
                                     }
-                                    webix.UIManager.setFocus(ele('scan'));
 
                                     ajax(fd, obj, 11, function (json) {
-                                        if (propertyValues[0] != '') {
-                                            setTable('dataT1', null);
-                                            if (propertyValues[1] != '' || propertyValues[2] != '') {
-                                                //console.log('obj : ', propertyValues[0].length);
-                                                //ele('PDS_No').setValue('');
-                                                ele('Order_No').setValue('');
-                                                setTable('dataT1', json.data);
-                                            }
-                                            webix.UIManager.setFocus(ele('scan'));
+
+                                        if (propertyValues[1] != '' || propertyValues[2] != '' && propertyValues[0] != '') {
+                                            //console.log('obj : ', propertyValues[0].length);
+                                            //ele('PDS_No').setValue('');
+                                            ele('Order_No').setValue('');
+                                            setTable('dataT1', json.data);
+
                                         }
+                                        //console.log('obj 0 : ', propertyValues[0], ' , obj 1 : ', propertyValues[1]);
+                                        if (propertyValues[0].length == 16 && propertyValues[0] != propertyValues[1] && propertyValues[1] != '') {
+
+                                            setTable('dataT1', null);
+
+                                        }
+
                                     }, null, function (json) {
+
                                         ele('scan').setValue('');
                                         ele('PDS_No').setValue('');
                                         ele('Order_No').setValue('');
                                         setTable('dataT1', null);
-                                        webix.UIManager.setFocus(ele('scan'));
+
                                     });
+
                                     webix.UIManager.setFocus(ele('scan'));
                                 }
                             },
