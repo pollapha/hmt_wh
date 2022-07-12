@@ -68,14 +68,14 @@ var header_CreatePicking = function () {
 
                                     view.blur();
 
-                                    if (propertyValues[0].length == 16) {
+                                    if (propertyValues[0].length == 18) {
 
                                         ele('scan').setValue('');
                                         ele('PDS_No').setValue(propertyValues[0]);
                                         webix.UIManager.setFocus(ele('PDS_No'));
 
                                     }
-                                    else if (propertyValues[0].length == 10) {
+                                    else if (propertyValues[0].length == 12) {
 
                                         ele('scan').setValue('');
                                         ele('Order_No').setValue(propertyValues[0]);
@@ -93,7 +93,7 @@ var header_CreatePicking = function () {
 
                                         }
                                         //console.log('obj 0 : ', propertyValues[0], ' , obj 1 : ', propertyValues[1]);
-                                        if (propertyValues[0].length == 16 && propertyValues[0] != propertyValues[1] && propertyValues[1] != '') {
+                                        if (propertyValues[0].length == 18 && propertyValues[0] != propertyValues[1] && propertyValues[1] != '') {
 
                                             setTable('dataT1', null);
 

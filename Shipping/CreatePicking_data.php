@@ -44,13 +44,20 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
+
+			$PDS_No = substr($PDS_No,1,16);
+			$Order_No = substr($Order_No,1,10);
+
 			$length = strlen($scan);
 
-			if ($PDS_No == '' && $length == 16) {
+			if ($PDS_No == '' && $length == 18) {
+				$scan = substr($scan,1,16);
 				$PDS_No = $scan;
-			} else if ($Order_No == '' && $length == 10) {
+			} else if ($Order_No == '' && $length == 12) {
+				$scan = substr($scan,1,10);
 				$Order_No = $scan;
 			}
+			//exit($PDS_No . ' , ' . $Order_No);
 
 			if ($PDS_No != '' && $Order_No != '') {
 				// Order_No ซ้ำ
