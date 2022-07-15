@@ -10,27 +10,27 @@ include('../../php/connection.php');
 $doc = $mysqli->real_escape_string(trim(strtoupper($_REQUEST['data'])));
 $dataset = array();
 $q1  = "SELECT 
-D_Note_No,
+Weld_On_No,
 date_format(Delivery_DateTime, '%d/%m/%y %H:%i:%s') AS Delivery_DateTime,
 Qty,
 SNP,
 MMTH_Part_No,
 Part_Descri
-FROM tbl_dnote_order
-where D_Note_No = '$doc'
-GROUP BY D_Note_No
-order by Delivery_DateTime, D_Note_No;";
+FROM tbl_weld_on_order
+where Weld_On_No = '$doc'
+GROUP BY Weld_On_No
+order by Delivery_DateTime, Weld_On_No;";
 
 $q1  .= "SELECT 
-D_Note_No,
+Weld_On_No,
 date_format(Delivery_DateTime, '%d/%m/%y %H:%i:%s') AS Delivery_DateTime,
 Qty,
 SNP,
 MMTH_Part_No,
 Part_Descri
-FROM tbl_dnote_order
-where D_Note_No = '$doc'
-order by Delivery_DateTime, D_Note_No;";
+FROM tbl_weld_on_order
+where Weld_On_No = '$doc'
+order by Delivery_DateTime, Weld_On_No;";
 if (!$mysqli->multi_query($q1)) {
     echo "Multi query failed: (" . $mysqli->errno . ") " . $mysqli->error;
 }
@@ -80,8 +80,8 @@ class PDF extends PDF_Code128
             'width:300;border:1; font-family:THSarabun;font-size:16; font-style:B; bgcolor:#C8C8C8; paddingY:3;'
         );
         $header->rowStyle('align:{CCCCC}; bgcolor:#ffffff;');
-        $header->easyCell(utf8Th($v[0]['D_Note_No']), 'valign:T;align:M; font-size:18;');
-        $this->instance->Code128(110, 24.5, $v[0]['D_Note_No'], 55, 10);
+        $header->easyCell(utf8Th($v[0]['Weld_On_No']), 'valign:T;align:M; font-size:18;');
+        $this->instance->Code128(110, 24.5, $v[0]['Weld_On_No'], 55, 10);
         $header->printRow();
 
         $headdetail = new easyTable(
@@ -96,7 +96,7 @@ class PDF extends PDF_Code128
         $headdetail->printRow();
         $headdetail->endTable(0);
 
-        //$this->instance->Code128(145, 10, $v[0]['D_Note_No'], 55, 7);
+        //$this->instance->Code128(145, 10, $v[0]['Weld_On_No'], 55, 7);
     }
     function Footer()
     {
@@ -116,7 +116,7 @@ $pdf->setInstance($pdf);
 $pdf->setHeaderData($headerData);
 $pdf->AddPage();
 
-$docno = $headerData[0]['D_Note_No'];
+$docno = $headerData[0]['Weld_On_No'];
 $pdf->SetTitle($docno);
 $detail = new easyTable($pdf, '{40, 100, 20}', 'width:300;border:1;font-family:THSarabun;font-size:12;valign:M;');
 $data = sizeof($detailData);

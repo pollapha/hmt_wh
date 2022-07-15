@@ -202,10 +202,10 @@ var header_UploadWeldOn = function () {
                                             },
                                             { id: "No", header: "", css: { "text-align": "right" }, editor: "", width: 40 },
                                             {
-                                                id: "D_Note_No", header: ["D-Note Number", { content: "textFilter" }], editor: "", width: 180,
-                                                template: "{common.treetable()} #D_Note_No#"
+                                                id: "Weld_On_No", header: ["Weld on No.", { content: "textFilter" }], editor: "", width: 180,
+                                                template: "{common.treetable()} #Weld_On_No#"
                                             },
-                                            //{ id: "D_Note_No", header: ["D-Note Number", { content: "textFilter" }], width: 200 },
+                                            //{ id: "Weld_On_No", header: ["D-Note Number", { content: "textFilter" }], width: 200 },
                                             { id: "Delivery_DateTime", header: ["Delivery DateTime", { content: "textFilter" }], width: 150 },
                                             { id: "MMTH_Part_No", header: ["Part No.", { content: "textFilter" }], width: 150 },
                                             { id: "Part_Descri", header: ["Part Description", { content: "textFilter" }], width: 400 },
@@ -231,17 +231,17 @@ var header_UploadWeldOn = function () {
                                         {
                                             "fa-file-pdf-o": function (e, t) {
                                                 var row = this.getItem(t);
-                                                var data = row.D_Note_No;
+                                                var data = row.Weld_On_No;
                                                 window.open("print/doc/d-note.php?data=" + data, '_blank');
                                             },
                                             "fa-ban": function (e, t) {
                                                 var row = this.getItem(t), datatable = this;
-                                                var obj = row.D_Note_No;
+                                                var obj = row.Weld_On_No;
                                                 console.log('obj : ', obj);
-                                                msBox('บันทึก', function () {
+                                                msBox('ลบ', function () {
                                                     ajax(fd, obj, 31, function (json) {
-                                                        loadData();
-                                                        webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ยกเลิกสำเร็จ', callback: function () { } });
+                                                        setTable('dataT1', json.data);
+                                                        webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ลบสำเร็จ', callback: function () { } });
 
                                                     }, null,
                                                         function (json) {

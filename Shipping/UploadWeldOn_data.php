@@ -46,6 +46,48 @@ if ($type <= 10) //data
 {
 	if ($_SESSION['xxxRole']->{'UploadWeldOn'}[3] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 31) {
+
+		$Weld_On_No  = $_POST['obj'];
+
+		$mysqli->autocommit(FALSE);
+		try {
+			$sql = "DELETE FROM tbl_weld_on_order
+			where Weld_On_No = '$Weld_On_No';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถลบข้อมูลได้' . __LINE__);
+			}
+
+			$mysqli->commit();
+
+			$sql = "SELECT Customer,
+				Dock,
+				Sale_Part,
+				Delivery_DateTime,
+				Qty,
+				Weld_On_No,
+				Part_No,
+				SNP,
+				Box_Type,
+				Pick_Qty,
+				Pick_Status,
+				Ship_Qty,
+				Ship_Status,
+				Slide_Status,
+				Creation_DateTime,
+				Created_By_ID,
+				Creation_Pick_DateTime,
+				Created_Pick_By_ID,
+				Creation_Ship_DateTime,
+				Created_Ship_By_ID
+				FROM tbl_weld_on_order
+				order by Delivery_DateTime, Weld_On_No";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 40 && $type <= 50) //save
 {
@@ -76,7 +118,7 @@ if ($type <= 10) //data
 					foreach ($data as $row) {
 						if ($count > 0) {
 
-							$D_Note_No = $row[0];
+							$Weld_On_No = $row[0];
 							$Delivery_DateTime = $row[1];
 							$MMTH_Part_No = $row[2];
 							$Qty = $row[3];
@@ -96,9 +138,10 @@ if ($type <= 10) //data
 							//exit($Part_ID);
 
 							$sqlArray[] = array(
-								'D_Note_No' => stringConvert($D_Note_No),
+								'Weld_On_No' => stringConvert($Weld_On_No),
 								'Delivery_DateTime' => stringConvert($Delivery_DateTime),
 								'Part_ID' => 'uuid_to_bin("' . $Part_ID . '",true)',
+								'Part_No' => stringConvert($Part_No),
 								'MMTH_Part_No' => stringConvert($MMTH_Part_No),
 								'Part_Descri' => stringConvert($Part_Descri),
 								'Qty' => $Qty,
@@ -119,7 +162,7 @@ if ($type <= 10) //data
 
 						for ($i = 0, $len = count($sqlChunk); $i < $len; $i++) {
 							$sqlValues = prepareValueInsert($sqlChunk[$i]);
-							$sql = "INSERT IGNORE INTO tbl_dnote_order $sqlName VALUES $sqlValues";
+							$sql = "INSERT IGNORE INTO tbl_weld_on_order $sqlName VALUES $sqlValues";
 							sqlError($mysqli, __LINE__, $sql, 1, 0);
 							$total += $mysqli->affected_rows;
 						}
@@ -229,17 +272,17 @@ function switchDate($d)
 function select_group($mysqli)
 {
 	$sql = "SELECT 
-	D_Note_No,
+	Weld_On_No,
 	date_format(Delivery_DateTime, '%d/%m/%y %H:%i:%s') AS Delivery_DateTime,
 	Qty,
 	SNP,
 	MMTH_Part_No,
 	Part_Descri
-	FROM tbl_dnote_order
-	order by Delivery_DateTime, D_Note_No";
+	FROM tbl_weld_on_order
+	order by Delivery_DateTime, Weld_On_No";
 	$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 	$value = jsonRow($re1, false, 0);
-	$data = group_by('D_Note_No', $value); //group datatable tree
+	$data = group_by('Weld_On_No', $value); //group datatable tree
 	$dateset = array();
 	$c = 1;
 	foreach ($data as $key1 => $value1) {
@@ -251,13 +294,13 @@ function select_group($mysqli)
 		)); //ที่จะให้อยู่ในตัว Child rows
 		$c2 = 1;
 		foreach ($sub as $key2 => $value2) {
-			$sub[$key2]['D_Note_No'] = $c2;
+			$sub[$key2]['Weld_On_No'] = $c2;
 			$sub[$key2]['Is_Header'] = 'NO';
 			$c2++;
 		}
 
 		$dateset[] =  array(
-			"No" => $c, 'Is_Header' => 'YES', "D_Note_No" => $key1,
+			"No" => $c, 'Is_Header' => 'YES', "Weld_On_No" => $key1,
 			"Delivery_DateTime" => $value1[0]['Delivery_DateTime'],
 			'Total_Item' => count($value1), "open" => 0, "data" => $sub
 		);
