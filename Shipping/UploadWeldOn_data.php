@@ -62,13 +62,12 @@ if ($type <= 10) //data
 
 			$sql = "SELECT Customer,
 				Dock,
-				Sale_Part,
 				Delivery_DateTime,
 				Qty,
 				Weld_On_No,
 				Part_No,
 				SNP,
-				Box_Type,
+				Package_Type,
 				Pick_Qty,
 				Pick_Status,
 				Ship_Qty,
@@ -120,6 +119,7 @@ if ($type <= 10) //data
 
 							$Weld_On_No = $row[0];
 							$Delivery_DateTime = $row[1];
+							$Delivery_Date = $row[1];
 							$MMTH_Part_No = $row[2];
 							$Qty = $row[3];
 							$SNP = $row[4];
@@ -139,6 +139,7 @@ if ($type <= 10) //data
 
 							$sqlArray[] = array(
 								'Weld_On_No' => stringConvert($Weld_On_No),
+								'Delivery_Date' => stringConvert($Delivery_Date),
 								'Delivery_DateTime' => stringConvert($Delivery_DateTime),
 								'Part_ID' => 'uuid_to_bin("' . $Part_ID . '",true)',
 								'Part_No' => stringConvert($Part_No),
