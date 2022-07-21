@@ -27,8 +27,9 @@ include('../php/connection.php');
 if ($type <= 10) //data
 {
 	if ($type == 1) {
-		$sql = "SELECT
+		$sql = "SELECT 
 		trh.GRN_Number,
+		tph.PS_Number,
 		ts.Package_Number,
 		tpm.Part_No,
 		ts.Serial_Number,
@@ -36,18 +37,44 @@ if ($type <= 10) //data
 		Trans_Type,
 		From_Area,
 		To_Area,
-		(select Location_Code from tbl_location_master tlm where ts.From_Loc_ID = tlm.Location_ID) as From_Location_Code,
-		(select Location_Code from tbl_location_master tlm where ts.To_Loc_ID = tlm.Location_ID) as To_Location_Code,
+		(SELECT 
+				Location_Code
+			FROM
+				tbl_location_master tlm
+			WHERE
+				ts.From_Loc_ID = tlm.Location_ID) AS From_Location_Code,
+		(SELECT 
+				Location_Code
+			FROM
+				tbl_location_master tlm
+			WHERE
+				ts.To_Loc_ID = tlm.Location_ID) AS To_Location_Code,
 		Pick_Number,
 		FIFO_No,
-		date_format(ts.Creation_DateTime, '%d/%m/%y %H:%i') AS Creation_DateTime,
-        (select user_fName from tbl_user tu where ts.Created_By_ID = tu.user_id) as Created_By,
-		date_format(ts.Last_Updated_DateTime, '%d/%m/%y %H:%i') AS Last_Updated_DateTime,
-        (select user_fName from tbl_user tu where ts.Updated_By_ID = tu.user_id) as Updated_By
-		FROM tachi.tbl_transaction ts
-		left join tbl_receiving_header trh on ts.Receiving_Header_ID = trh.Receiving_Header_ID
-		left join tbl_part_master tpm on ts.Part_ID = tpm.Part_ID
-		order by Creation_DateTime desc;";
+		DATE_FORMAT(ts.Creation_DateTime, '%d/%m/%y %H:%i') AS Creation_DateTime,
+		(SELECT 
+				user_fName
+			FROM
+				tbl_user tu
+			WHERE
+				ts.Created_By_ID = tu.user_id) AS Created_By,
+		DATE_FORMAT(ts.Last_Updated_DateTime,
+				'%d/%m/%y %H:%i') AS Last_Updated_DateTime,
+		(SELECT 
+				user_fName
+			FROM
+				tbl_user tu
+			WHERE
+				ts.Updated_By_ID = tu.user_id) AS Updated_By
+	FROM
+		tachi.tbl_transaction ts
+			LEFT JOIN
+		tbl_receiving_header trh ON ts.Receiving_Header_ID = trh.Receiving_Header_ID
+			LEFT JOIN
+		tbl_picking_header tph ON ts.Picking_Header_ID = tph.Picking_Header_ID
+			LEFT JOIN
+		tbl_part_master tpm ON ts.Part_ID = tpm.Part_ID
+	ORDER BY Creation_DateTime DESC;";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');

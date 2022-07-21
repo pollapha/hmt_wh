@@ -99,6 +99,7 @@ var header_Transaction = function () {
                                 columns: [
                                     { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
                                     { id: "GRN_Number", header: ["GRN Number", { content: "textFilter" }], width: 150 },
+                                    { id: "PS_Number", header: ["PS Number", { content: "textFilter" }], width: 150 },
                                     { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 140 },
                                     { id: "Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
                                     { id: "Part_No", header: ["Part No.", { content: "textFilter" }], width: 120 },
