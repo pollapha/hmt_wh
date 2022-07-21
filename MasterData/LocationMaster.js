@@ -262,7 +262,8 @@ var header_LocationMaster = function () {
                                             },
                                             { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
                                             { id: "Location_Code", header: ["Location Code", { content: "textFilter" }], width: 290 },
-                                            { id: "Status", header: ["Status", { content: "textFilter" }], width: 290 },
+                                            { id: "Area", header: ["Area", { content: "textFilter" }], width: 200 },
+                                            { id: "Status", header: ["Status", { content: "textFilter" }], width: 200 },
                                             { id: "Creation_Date", header: ["Creation Date", { content: "textFilter" }], width: 300 },
 
                                         ],

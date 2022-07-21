@@ -31,6 +31,7 @@ if ($type <= 10) //data
 		BIN_TO_UUID(Location_ID,true) as Location_ID,
 		Location_Code, 
 		Status,
+		Area,
 		date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 		FROM tbl_location_master";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -81,6 +82,7 @@ if ($type <= 10) //data
 			$sql = "SELECT Location_Code,
 			BIN_TO_UUID(Location_ID,true) as Location_ID, 
 			Status,
+			Area,
 			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 			FROM tbl_location_master";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
@@ -138,6 +140,7 @@ if ($type <= 10) //data
 			$sql = "SELECT Location_Code,
 			BIN_TO_UUID(Location_ID,true) as Location_ID,
 			Status,
+			Area,
 			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
 			FROM tbl_location_master";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
