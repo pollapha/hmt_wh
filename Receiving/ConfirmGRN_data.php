@@ -33,7 +33,7 @@ if ($type <= 10) //data
 			echo "[]";
 		}
 		$sql = "SELECT GRN_Number as value
-		from tbl_receiving_header where GRN_Number like '%$val%' limit 5";
+		from tbl_receiving_header where GRN_Number like '%$val%' and Status_Receiving = 'PENDING' limit 5";
 		if ($re1 = $mysqli->query($sql)) {
 			echo json_encode(jsonRow($re1, false, 0));
 		} else {
@@ -147,7 +147,7 @@ if ($type <= 10) //data
 			}
 
 
-			$sp_trans = "CALL SP_Transaction_Save('IN','$GRN_Number','','','$cBy','','');";
+			$sp_trans = "CALL SP_Transaction_Save('IN','$GRN_Number','','','','$cBy','','');";
 
 			// echo $sp_trans;exit();
 

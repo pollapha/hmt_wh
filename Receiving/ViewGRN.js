@@ -67,43 +67,60 @@ var header_ViewGRN = function () {
                                 {
                                     cols:
                                         [
-                                            vw1("button", 'btnFind', "Find (ค้นหา)", {
-                                                width: 170, on:
-                                                {
-                                                    onItemClick: function () {
-                                                        var btn = this;
-                                                        loadData(btn);
-                                                    }
-                                                }
-                                            }),
+                                            // vw1("text", 'GRN_Number', "PS Number", {
+                                            //     //required: true, suggest: fd + "?type=1", 
+                                            //     width: 250
+                                            // },
+                                            // ),
+                                            {
+                                                rows: [
+                                                    //{},
+                                                    vw1("button", 'btnFind', "Find (ค้นหา)", {
+                                                        width: 170, on:
+                                                        {
+                                                            onItemClick: function () {
+                                                                var btn = this;
+                                                                loadData(btn);
+                                                            }
+                                                        }
+                                                    }),
+                                                ]
+                                            },
                                             {},
-                                            vw1("button", 'btnExport', "Export (โหลดเป็นไฟล์เอ๊กเซล)", {
-                                                width: 200, on:
-                                                {
-                                                    onItemClick: function () {
-                                                        var dataT1 = ele("dataTREE"), obj = {}
-                                                        if (dataT1.count() != 0) {
-                                                            var obj = {};
-                                                            obj.filenameprefix = 'GRN_Report';
-                                                            $.fileDownload("Receiving/ViewGRN_data.php",
-                                                                {
-                                                                    httpMethod: "POST",
-                                                                    data: { obj: obj, type: 5 },
-                                                                    successCallback: function (url) {
-                                                                    },
-                                                                    prepareCallback: function (url) {
-                                                                    },
-                                                                    failCallback: function (responseHtml, url) {
+                                            {
+                                                rows: [
+                                                    {},
+                                                    vw1("button", 'btnExport', "Export (โหลดเป็นไฟล์เอ๊กเซล)", {
+                                                        width: 200, on:
+                                                        {
+                                                            onItemClick: function () {
+                                                                var dataT1 = ele("dataTREE"), obj = {}
+                                                                if (dataT1.count() != 0) {
+                                                                    var obj = {};
+                                                                    //var obj = ele('form1').getValues();
+                                                                    //console.log(obj);
+                                                                    obj.filenameprefix = 'GRN_Report';
+                                                                    $.fileDownload("Receiving/ViewGRN_data.php",
+                                                                        {
+                                                                            httpMethod: "POST",
+                                                                            data: { obj: obj, type: 5 },
+                                                                            successCallback: function (url) {
+                                                                            },
+                                                                            prepareCallback: function (url) {
+                                                                            },
+                                                                            failCallback: function (responseHtml, url) {
 
-                                                                    }
-                                                                });
+                                                                            }
+                                                                        });
+                                                                }
+                                                                else {
+                                                                    webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ไม่พบข้อมูลในตาราง', callback: function () { } });
+                                                                }
+                                                            }
                                                         }
-                                                        else {
-                                                            webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ไม่พบข้อมูลในตาราง', callback: function () { } });
-                                                        }
-                                                    }
-                                                }
-                                            }),
+                                                    }),
+                                                ]
+                                            }
                                         ]
                                 },
                                 {
@@ -169,7 +186,7 @@ var header_ViewGRN = function () {
                                         "fa-ban": function (e, t) {
                                             var row = this.getItem(t), datatable = this;
                                             var obj = row.GRN_Number;
-                                            console.log('obj : ',obj);
+                                            console.log('obj : ', obj);
                                             msBox('บันทึก', function () {
                                                 ajax(fd, obj, 31, function (json) {
                                                     loadData();

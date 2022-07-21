@@ -185,7 +185,7 @@ if ($type <= 10) //data
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-			$sql = "CALL SP_Transaction_Save('PUT AWAY','$GRN_Number','$Package_Number','','$cBy','N/A','$Location_Code');";
+			$sql = "CALL SP_Transaction_Save('PUT AWAY','$GRN_Number','','$Package_Number','','$cBy','N/A','$Location_Code');";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			// echo $sql;exit();
 			if (!$re1) {
