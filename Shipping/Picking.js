@@ -46,8 +46,8 @@ var header_Picking = function () {
         ajax(fd, {}, 1, function (json) {
             if (json.data.header.length > 0) {
                 ele('create_ps').disable();
-                ele('Delivery_Date').disable();
-                ele('PS_No').disable();
+                ele('Pick_Date').disable();
+                ele('PS_Number').disable();
                 ele('form1').setValues(json.data.header[0]);
                 ele('form2').setValues(json.data.header[0]);
                 setTable('dataT1', json.data.body);
@@ -77,7 +77,7 @@ var header_Picking = function () {
                                 rows: [
                                     {
                                         cols: [
-                                            vw1("datepicker", 'Delivery_Date', "Delivery Date", { value: dayjs().format("YYYY-MM-DD"), stringResult: true, ...datatableDateFormat, required: false, width: 250 }),
+                                            vw1("datepicker", 'Pick_Date', "Pick Date", { value: dayjs().format("YYYY-MM-DD"), stringResult: true, ...datatableDateFormat, required: false, width: 250 }),
                                             {
                                                 rows: [
                                                     {},
@@ -87,15 +87,13 @@ var header_Picking = function () {
                                                         on: {
                                                             onItemClick: function () {
                                                                 var obj = ele('form1').getValues();
+
                                                                 webix.confirm(
                                                                     {
                                                                         title: "กรุณายืนยัน", ok: "ใช่", cancel: "ไม่", text: "คุณต้องการบันทึกข้อมูล<br><font color='#27ae60'><b>ใช่</b></font> หรือ <font color='#3498db'><b>ไม่</b></font>",
                                                                         callback: function (res) {
                                                                             if (res) {
                                                                                 ajax(fd, obj, 11, function (json) {
-                                                                                    ele('create_ps').disable();
-                                                                                    ele('Delivery_Date').disable();
-                                                                                    ele('PS_No').disable();
                                                                                     loadData();
                                                                                     //console.log(json.data);
                                                                                 }, null,
@@ -105,8 +103,8 @@ var header_Picking = function () {
                                                                             }
                                                                             else {
                                                                                 ele('create_ps').enable();
-                                                                                ele('Delivery_Date').enable();
-                                                                                ele('PS_No').disable();
+                                                                                ele('Pick_Date').enable();
+                                                                                ele('PS_Number').enable();
                                                                             }
                                                                         }
                                                                     });
@@ -130,7 +128,7 @@ var header_Picking = function () {
 
                             "onSubmit": function (view, e) {
 
-                                if (view.config.name == 'Qty') {
+                                if (view.config.name == 'FG_Serial_Number') {
 
                                     view.blur();
                                     var obj1 = ele('form1').getValues();
@@ -174,10 +172,9 @@ var header_Picking = function () {
                                 rows: [
                                     {
                                         cols: [
-                                            //vw1("text", 'PS_No', "PS Number", { width: 250 }),
+                                            vw1("text", 'PS_Number', "PS Number", { width: 250 }),
                                             vw1("text", 'Package_Number', "Package Number", { width: 250 }),
-                                            vw1("text", 'Part_No', "Part No.", { width: 250 }),
-                                            vw1("text", 'Qty', "Qty", { width: 250 }),
+                                            vw1("text", 'FG_Serial_Number', "Serial Number", { width: 250 }),
                                             {
                                                 rows: [
                                                     {},
@@ -197,14 +194,14 @@ var header_Picking = function () {
                                                                                 callback: function (res) {
                                                                                     if (res) {
                                                                                         ajax(fd, obj3, 41, function (json) {
-                                                                                            setTable('dataT1', json.data);
-                                                                                            ele('create_grn').enable();
-                                                                                            ele('DN_Number').enable();
-                                                                                            ele('GRN_Number').enable();
-                                                                                            ele('DN_Number').setValue('');
-                                                                                            ele('GRN_Number').setValue('');
+                                                                                            ele('create_ps').enable();
+                                                                                            ele('Pick_Date').enable();
+                                                                                            ele('PS_Number').enable();
+                                                                                            ele('Pick_Date').setValue('');
+                                                                                            ele('PS_Number').setValue('');
                                                                                             ele('Package_Number').setValue('');
                                                                                             ele('FG_Serial_Number').setValue('');
+                                                                                            ele('dataT1').clearAll();
                                                                                         }, null,
                                                                                             function (json) {
                                                                                                 //ele('find').callEvent("onItemClick", []);
@@ -235,35 +232,43 @@ var header_Picking = function () {
                                 resizeColumn: true, autoheight: false, multiselect: true, hover: "myhover",
                                 threeState: true, rowLineHeight: 25, rowHeight: 25,
                                 datatype: "json", headerRowHeight: 25, leftSplit: 2, editable: true,
-                                scheme:
-                                {
-                                    $change: function (obj) {
-                                        var css = {};
-                                        obj.$cellCss = css;
-                                        if (obj.Pick_Qty != 0) {
-                                            obj.$css = { "background": "#ffffb2", "font-weight": "bold" };
-                                        }
-                                    }
-                                },
+                                // scheme:
+                                // {
+                                //     $change: function (obj) {
+                                //         var css = {};
+                                //         obj.$cellCss = css;
+                                //         if (obj.Pick_Qty != 0) {
+                                //             obj.$css = { "background": "#ffffb2", "font-weight": "bold" };
+                                //         }
+                                //     }
+                                // },
                                 columns: [
                                     { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
-                                    { id: "Customer", header: ["Customer", { content: "textFilter" }], width: 100 },
-                                    { id: "Dock", header: ["Dock", { content: "textFilter" }], width: 100 },
-                                    { id: "Weld_On_No", header: ["Weld on No.", { content: "textFilter" }], width: 200 },
-                                    { id: "Delivery_DateTime", header: ["Delivery DateTime", { content: "textFilter" }], width: 150 },
-                                    { id: "MMTH_Part_No", header: ["Part No.", { content: "textFilter" }], width: 150 },
-                                    { id: "Part_No", header: ["Part No.", { content: "textFilter" }], width: 200 },
-                                    { id: "Part_Descri", header: ["Part Description", { content: "textFilter" }], width: 400 },
-                                    { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 70 },
-                                    { id: "SNP", header: ["SNP", { content: "textFilter" }], width: 70 },
-                                    { id: "PS_No", header: ["PS No.", { content: "textFilter" }], width: 150 },
-                                    { id: "Package_Type", header: ["Package Type", { content: "textFilter" }], width: 120 },
-                                    { id: "Pick_Qty", header: ["Pick Qty", { content: "textFilter" }], width: 100 },
-                                    { id: "Pick_Status", header: ["Pick Status", { content: "textFilter" }], width: 150 },
-                                    { id: "Ship_Qty", header: ["Ship Qty", { content: "textFilter" }], width: 100 },
-                                    { id: "Ship_Status", header: ["Ship Status", { content: "textFilter" }], width: 120 },
-                                    { id: "Slide_Status", header: ["Slide Status", { content: "textFilter" }], width: 120 },
+                                    { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
+                                    { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
+                                    { id: "Part_No", header: ["Part No.", { content: "textFilter" }], width: 140 },
+                                    { id: "Part_Name", header: ["Part Name", { content: "textFilter" }], width: 220 },
+                                    { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
                                 ],
+                                // columns: [
+                                //     { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
+                                //     { id: "Customer", header: ["Customer", { content: "textFilter" }], width: 100 },
+                                //     { id: "Dock", header: ["Dock", { content: "textFilter" }], width: 100 },
+                                //     { id: "Weld_On_No", header: ["Weld on No.", { content: "textFilter" }], width: 200 },
+                                //     { id: "Delivery_DateTime", header: ["Delivery DateTime", { content: "textFilter" }], width: 150 },
+                                //     { id: "MMTH_Part_No", header: ["Part No.", { content: "textFilter" }], width: 150 },
+                                //     { id: "Part_No", header: ["Part No.", { content: "textFilter" }], width: 200 },
+                                //     { id: "Part_Descri", header: ["Part Description", { content: "textFilter" }], width: 400 },
+                                //     { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 70 },
+                                //     { id: "SNP", header: ["SNP", { content: "textFilter" }], width: 70 },
+                                //     { id: "PS_No", header: ["PS No.", { content: "textFilter" }], width: 150 },
+                                //     { id: "Package_Type", header: ["Package Type", { content: "textFilter" }], width: 120 },
+                                //     { id: "Pick_Qty", header: ["Pick Qty", { content: "textFilter" }], width: 100 },
+                                //     { id: "Pick_Status", header: ["Pick Status", { content: "textFilter" }], width: 150 },
+                                //     { id: "Ship_Qty", header: ["Ship Qty", { content: "textFilter" }], width: 100 },
+                                //     { id: "Ship_Status", header: ["Ship Status", { content: "textFilter" }], width: 120 },
+                                //     { id: "Slide_Status", header: ["Slide Status", { content: "textFilter" }], width: 120 },
+                                // ],
                                 onClick:
                                 {
                                 },
