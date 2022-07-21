@@ -1,0 +1,274 @@
+var header_ConfirmPicking = function () {
+    var menuName = "ConfirmPicking_", fd = "Picking/" + menuName + "data.php";
+
+    function init() {
+        webix.UIManager.setFocus(ele('PS_Number'));
+    };
+
+    function ele(name) {
+        return $$($n(name));
+    };
+
+    function $n(name) {
+        return menuName + name;
+    };
+
+    function focus(name) {
+        setTimeout(function () { ele(name).focus(); }, 100);
+    };
+
+    function setView(target, obj) {
+        var key = Object.keys(obj);
+        for (var i = 0, len = key.length; i < len; i++) {
+            target[key[i]] = obj[key[i]];
+        }
+        return target;
+    };
+
+    function vw1(view, name, label, obj) {
+        var v = { view: view, required: true, label: label, id: $n(name), name: name, labelPosition: "top" };
+        return setView(v, obj);
+    };
+
+    function vw2(view, id, name, label, obj) {
+        var v = { view: view, required: true, label: label, id: $n(id), name: name, labelPosition: "top" };
+        return setView(v, obj);
+    };
+
+    function setTable(tableName, data) {
+        if (!ele(tableName)) return;
+        ele(tableName).clearAll();
+        ele(tableName).parse(data);
+        ele(tableName).filterByAll();
+    };
+
+    function loadData(btn) {
+        var obj = ele('form1').getValues();
+        ajax(fd, obj, 2, function (json) {
+            setTable('dataT1', json.data);
+        }, btn);
+    };
+
+    return {
+        view: "scrollview",
+        scroll: "native-y",
+        id: "header_ConfirmPicking",
+        body:
+        {
+            id: "ConfirmPicking_id",
+            type: "clean",
+            rows:
+                [
+                    {
+                        view: "form", scroll: false, id: $n('form1'),
+                        on:
+
+                        {
+
+                            "onSubmit": function (view, e) {
+
+                                if (view.config.name == 'FG_Serial_Number') {
+
+                                    view.blur();
+                                    var obj = ele('form1').getValues();
+                                    ajax(fd, obj, 11, function (json) {
+                                        loadData();
+                                        webix.UIManager.setFocus(ele('Package_Number'));
+                                        ele('Package_Number').setValue('');
+                                        ele('FG_Serial_Number').setValue('');
+                                        //ele('FG_Serial_Number').setValue('');
+
+                                    }, null,
+
+                                        function (json) {
+                                            webix.UIManager.setFocus(ele('Package_Number'));
+                                            ele('Package_Number').setValue('');
+                                            ele('FG_Serial_Number').setValue('');
+                                            //ele('Package_Number').disable();
+                                        });
+
+                                }
+                                else if (webix.UIManager.getNext(view).config.type == 'line') {
+
+                                    //webix.UIManager.setFocus(webix.UIManager.getNext(webix.UIManager.getNext(view)));
+                                    //view.disable();
+                                    webix.UIManager.setFocus(ele('Package_Number'));
+
+                                }
+
+                                else {
+
+                                    webix.UIManager.setFocus(ele('Package_Number'));
+                                }
+
+
+                                if (view.config.name == 'PS_Number') {
+
+                                    view.blur();
+                                    var obj = ele('form1').getValues();
+                                    console.log(obj);
+                                    ajax(fd, obj, 2, function (json) {
+                                        //loadData();
+                                        setTable('dataT1', json.data);
+                                        webix.UIManager.setFocus(ele('Package_Number'));
+                                        ele('PS_Number').disable();
+
+                                    }, null,
+
+                                        function (json) {
+                                            ele('PS_Number').enable();
+                                            ele('PS_Number').setValue('');
+                                            webix.UIManager.setFocus(ele('PS_Number'));
+                                        });
+
+
+                                }
+
+                                else if (webix.UIManager.getNext(view).config.type == 'line') {
+
+                                    //webix.UIManager.setFocus(webix.UIManager.getNext(webix.UIManager.getNext(view)));
+                                    //view.disable();
+                                    webix.UIManager.setFocus(ele('FG_Serial_Number'));
+
+                                }
+
+                                else {
+
+                                    webix.UIManager.setFocus(ele('FG_Serial_Number'));
+
+                                }
+                            },
+                        },
+                        elements: [
+                            {
+                                rows: [
+                                    {
+                                        cols: [
+                                            vw1("text", 'PS_Number', "PS Number", {
+                                                //required: true, suggest: fd + "?type=1", 
+                                                width: 250
+                                            },
+                                            ),
+                                            vw1("text", 'Package_Number', "Package Number", { width: 250 }),
+                                            vw1("text", 'FG_Serial_Number', "Serial Number", { width: 250 }),
+                                            // {
+                                            //     rows: [
+                                            //         {},
+                                            //         vw1('button', 'find', 'Find (ค้นหา)', {
+                                            //             width: 100,
+                                            //             on: {
+                                            //                 onItemClick: function () {
+                                            //                     var obj = ele('form1').getValues();
+                                            //                     console.log(obj);
+                                            //                     ajax(fd, obj, 2, function (json) {
+                                            //                         ele('confirm').show();
+                                            //                         setTable('dataT1', json.data);
+                                            //                     }, null,
+                                            //                         function (json) {
+                                            //                             ele('PS_Number').setValue('');
+                                            //                             ele('confirm').hide();
+                                            //                             ele('dataT1').clearAll();
+                                            //                         });
+                                            //                 }
+                                            //             }
+                                            //         }),
+                                            //     ]
+                                            // },
+                                            {
+                                                rows: [
+                                                    {},
+                                                    vw1('button', 'confirm', 'Confirm Picking', {
+                                                        type: 'form',
+                                                        width: 120,
+                                                        on: {
+                                                            onItemClick: function () {
+                                                                var obj = ele('form1').getValues();
+                                                                webix.confirm(
+                                                                    {
+                                                                        title: "กรุณายืนยัน", ok: "ใช่", cancel: "ไม่", text: "คุณต้องการบันทึกข้อมูล<br><font color='#27ae60'><b>ใช่</b></font> หรือ <font color='#3498db'><b>ไม่</b></font>",
+                                                                        callback: function (res) {
+                                                                            if (res) {
+                                                                                ajax(fd, obj, 41, function (json) {
+                                                                                    ele('PS_Number').enable();
+                                                                                    ele('PS_Number').setValue('');
+                                                                                    setTable('dataT1', json.data);
+
+                                                                                }, null,
+                                                                                    function (json) {
+                                                                                        //loadData();
+                                                                                        //ele('PS_Number').setValue('');
+                                                                                        //ele('confirm').hide();
+                                                                                        //ele('dataT1').clearAll();
+                                                                                    });
+                                                                            }
+                                                                            ele('confirm').show();
+                                                                        }
+                                                                    });
+                                                            }
+                                                        }
+                                                    }),
+                                                ]
+                                            },
+                                            {}
+                                        ],
+                                    },
+
+                                ]
+                            },
+                        ]
+                    },
+                    {
+                        padding: 3,
+                        cols: [
+                            {
+                                view: "datatable", id: $n("dataT1"), navigation: true, select: true, editaction: "custom",
+                                resizeColumn: true, autoheight: false, multiselect: true, hover: "myhover",
+                                threeState: true, rowLineHeight: 25, rowHeight: 25,
+                                datatype: "json", headerRowHeight: 25, leftSplit: 2, editable: true,
+                                scheme:
+                                {
+                                    $change: function (item) {
+                                        if (item.Confirm_Picking_DateTime == null && item.Status_Picking == 'PENDING' && item.Pick_Number != null) {
+                                            item.$css = { "background": "#afeac8", "font-weight": "bold" };
+                                        }
+                                    }
+                                },
+                                columns: [
+                                    { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
+                                    { id: "Pick_Date", header: ["Pick Date", { content: "textFilter" }], width: 200 },
+                                    //{ id: "DN_Number", header: ["DN Number", { content: "textFilter" }], width: 150 },
+                                    { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
+                                    { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
+                                    { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
+                                    { id: "Pick_Number", header: ["Pick_Number", { content: "textFilter" }], width: 100 },
+                                    //{ id: "Status_Picking", header: ["Status_Picking", { content: "textFilter" }], width: 100 },
+                                    { id: "Confirm_Picking_DateTime", header: ["Confirm Picking DateTime", { content: "textFilter" }], width: 200 },
+                                ],
+                                onClick:
+                                {
+                                },
+                                on: {
+                                    // "onEditorChange": function (id, value) {
+                                    // }
+                                    "onItemClick": function (id) {
+                                        this.editRow(id);
+                                    }
+                                }
+                            },
+                        ]
+                    },
+                ], on:
+            {
+                onHide: function () {
+
+                },
+                onShow: function () {
+
+                },
+                onAddView: function () {
+                    init();
+                }
+            }
+        }
+    };
+};
