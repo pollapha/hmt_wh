@@ -164,7 +164,7 @@ var header_ViewPS = function () {
                                         "fa-file-pdf-o": function (e, t) {
                                             var row = this.getItem(t);
                                             var data = row.PS_Number;
-                                            window.open("print/doc/grn.php?data=" + data, '_blank');
+                                            window.open("print/doc/ps.php?data=" + data, '_blank');
                                         },
                                         "fa-ban": function (e, t) {
                                             var row = this.getItem(t), datatable = this;

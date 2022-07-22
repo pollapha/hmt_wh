@@ -75,7 +75,7 @@ if ($type <= 10) //data
 		try {
 
 			$sql = "SELECT Delivery_Date FROM tbl_weld_on_order
-			where Delivery_Date = '$Pick_Date'";
+			where Delivery_Date = '$Pick_Date'and Pick_Status = 'PENDING'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);

@@ -2,7 +2,7 @@ var header_Pick = function () {
     var menuName = "Pick_", fd = "Picking/" + menuName + "data.php";
 
     function init() {
-
+        loadData();
     };
 
     function ele(name) {

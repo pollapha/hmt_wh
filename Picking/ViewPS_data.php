@@ -124,31 +124,6 @@ if ($type <= 10) //data
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-			// $sql = "UPDATE tbl_picking_pre tpp
-			// inner join tbl_picking_header tph on tpp.Picking_Header_ID = tph.Picking_Header_ID
-			// set tpp.status = 'CANCEL'
-			// where PS_Number = '$PS_Number' and tph.Status_Receiving = 'PENDING' and tpp.status = 'COMPLETE';";
-			// sqlError($mysqli, __LINE__, $sql, 1);
-			// if ($mysqli->affected_rows == 0) {
-			// 	throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
-			// }
-
-			// $sql = "UPDATE tbl_picking_pre
-			// 	set status = 'CANCEL'
-			// 	where Picking_Header_ID = '$Picking_Header_ID' and Status_Receiving = 'PENDING' and Status = 'COMPLETE'";
-			// sqlError($mysqli, __LINE__, $sql, 1);
-			// if ($mysqli->affected_rows == 0) {
-			// 	throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-			// }
-
-			// $sql = "UPDATE tbl_transaction
-			// 	set Trans_Type = 'CANCEL'
-			// 	where Picking_Header_ID = '$Picking_Header_ID'";
-			// sqlError($mysqli, __LINE__, $sql, 1);
-			// if ($mysqli->affected_rows == 0) {
-			// 	throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-			// }
-
 			$mysqli->commit();
 		} catch (Exception $e) {
 			$mysqli->rollback();

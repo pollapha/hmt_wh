@@ -79,7 +79,7 @@ if ($type <= 10) //data
 			and Package_Number = '$Package_Number' and Area = 'Pick'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows > 0) {
-				throw new Exception('GRN นี้ทำการ Put away ไปเรียบร้อยแล้ว' . __LINE__);
+				throw new Exception('PS นี้ทำการ Put away ไปเรียบร้อยแล้ว' . __LINE__);
 			}
 
 			$sql = "SELECT
