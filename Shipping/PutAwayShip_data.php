@@ -200,7 +200,7 @@ if ($type <= 10) //data
 
 			//อัพเดท Area ใน tbl_inventory
 			$sql = "UPDATE tbl_inventory tiv
-			set tiv.Area = 'Pick',
+			set tiv.Area = 'ShipOut',
 			tiv.Location_ID = UUID_TO_BIN('$Location_ID',true),
 			tiv.Last_Updated_DateTime = now(),
 			tiv.Updated_By_ID = $cBy
