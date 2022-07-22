@@ -30,6 +30,7 @@ if ($type <= 10) //data
 		$sql = "SELECT 
 		trh.GRN_Number,
 		tph.PS_Number,
+		tsh.GTN_Number,
 		ts.Package_Number,
 		tpm.Part_No,
 		ts.Serial_Number,
@@ -72,6 +73,8 @@ if ($type <= 10) //data
 		tbl_receiving_header trh ON ts.Receiving_Header_ID = trh.Receiving_Header_ID
 			LEFT JOIN
 		tbl_picking_header tph ON ts.Picking_Header_ID = tph.Picking_Header_ID
+			LEFT JOIN
+		tbl_shipping_header tsh ON ts.Shipping_Header_ID = tsh.Shipping_Header_ID
 			LEFT JOIN
 		tbl_part_master tpm ON ts.Part_ID = tpm.Part_ID
 	ORDER BY Creation_DateTime DESC;";

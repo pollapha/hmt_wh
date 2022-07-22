@@ -56,6 +56,13 @@ var header_TransferLocation = function () {
         }, btn);
     };
 
+    function loadData3(btn) {
+        var obj = ele('form3').getValues();
+        ajax(fd, obj, 5, function (json) {
+            setTable('dataT3', json.data);
+        }, btn);
+    };
+
     var cells =
         [
             {
@@ -345,6 +352,146 @@ var header_TransferLocation = function () {
                         ]
                 }
             },
+            {
+                header: "Ship",
+                body: {
+                    view: "form",
+                    id: $n("form3"),
+                    on:
+                    {
+
+                        "onSubmit": function (view, e) {
+
+                            if (view.config.name == 'Package_Number') {
+
+                                view.blur();
+                                var obj = ele('form3').getValues();
+                                ajax(fd, obj, 6, function (json) {
+                                    loadData3();
+                                    ele('save_ship').show();
+                                    ele('Location_Code_Ship').show();
+                                    webix.UIManager.setFocus(ele('Location_Code_Ship'));
+                                }
+                                    , null,
+
+                                    function (json) {
+                                        ele('GTN_Number').setValue('');
+                                        ele('Package_Number_Ship').setValue('');
+                                        ele('Location_Code_Ship').setValue('');
+                                        ele('dataT3').clearAll();
+                                        ele('save_ship').hide();
+                                        ele('Location_Code_Ship').hide();
+                                        webix.UIManager.setFocus(ele('GTN_Number'));
+                                    });
+
+                            }
+
+
+                            else if (webix.UIManager.getNext(view).config.type == 'line') {
+
+                                webix.UIManager.setFocus(webix.UIManager.getNext(webix.UIManager.getNext(view)));
+
+                                //view.disable();
+
+                            }
+
+                            else {
+
+                                webix.UIManager.setFocus(webix.UIManager.getNext(view));
+
+                            }
+
+                        }
+
+                    },
+                    elements:
+                        [
+                            {
+                                cols:
+                                    [
+                                        {
+                                            cols: [
+                                                vw1("text", 'GTN_Number', "GTN Number", { width: 200, }),
+                                                vw2("text", 'Package_Number_Ship', 'Package_Number', "Package Number", { width: 200, }),
+                                                vw2("text", 'Location_Code_Ship', 'Location_Code', "Location Code", { width: 200, hidden: 1 }),
+                                            ]
+
+                                        },
+
+                                        {
+                                            rows: [
+                                                {},
+                                                vw1('button', 'save_ship', 'Save (บันทึก)', {
+                                                    type: 'form',
+                                                    width: 100,
+                                                    hidden: 1,
+                                                    on: {
+                                                        onItemClick: function () {
+                                                            var obj = ele('form3').getValues();
+                                                            console.log(obj);
+                                                            ajax(fd, obj, 23, function (json) {
+                                                                loadData3();
+                                                                ele('GTN_Number').setValue('');
+                                                                ele('Package_Number_Ship').setValue('');
+                                                                ele('Location_Code_Ship').setValue('');
+                                                                ele('save_ship').hide();
+                                                                ele('Location_Code_Ship').hide();
+                                                                webix.UIManager.setFocus(ele('GTN_Number'));
+                                                            }, null,
+                                                                function (json) {
+                                                                    ele('Location_Code_Ship').setValue('');
+                                                                    webix.UIManager.setFocus(ele('Location_Code_Ship'));
+                                                                });
+                                                        }
+                                                    }
+                                                }),
+                                            ]
+                                        },
+                                        {}
+                                    ]
+                            },
+
+                            {
+                                padding: 3,
+                                cols: [
+                                    {
+                                        view: "datatable", id: $n("dataT3"), navigation: true, select: true, editaction: "custom",
+                                        resizeColumn: true, autoheight: false, multiselect: true, hover: "myhover",
+                                        threeState: true, rowLineHeight: 25, rowHeight: 25,
+                                        datatype: "json", headerRowHeight: 25, leftSplit: 2, editable: true,
+                                        scheme:
+                                        {
+                                            $change: function (obj) {
+                                                var css = {};
+                                                obj.$cellCss = css;
+                                            }
+                                        },
+                                        columns: [
+                                            { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
+                                            { id: "GTN_Number", header: ["GTN Number", { content: "textFilter" }], width: 200 },
+                                            { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
+                                            { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
+                                            { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
+                                            { id: "Area", header: ["Area", { content: "textFilter" }], width: 150 },
+                                            { id: "Location_Code", header: ["Location Code", { content: "textFilter" }], width: 150 },
+                                        ],
+                                        onClick:
+                                        {
+                                        },
+                                        on: {
+                                            // "onEditorChange": function (id, value) {
+                                            // }
+                                            "onItemClick": function (id) {
+                                                this.editRow(id);
+                                            }
+                                        }
+                                    },
+                                ]
+                            },
+
+                        ]
+                }
+            }
         ]
 
     return {
