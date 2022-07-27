@@ -49,7 +49,7 @@ var header_LocationMaster = function () {
             head: "Add (เพิ่มข้อมูล)", top: 50, position: "center",
             body:
             {
-                view: "form", scroll: false, id: $n("win_add_form"), width: 300,
+                view: "form", scroll: false, id: $n("win_add_form"), width: 500,
                 elements:
                     [
                         {
@@ -61,7 +61,20 @@ var header_LocationMaster = function () {
                                                 {
                                                     cols: [
                                                         vw1('text', 'Location_ID', 'Location ID.', { labelPosition: "top", hidden: 1 }),
-                                                        vw1('text', 'Location_Code', 'Location Code.', { labelPosition: "top" }),
+                                                        vw1('text', 'Location_Code', 'Location Code', { labelPosition: "top" }),
+                                                        vw1('richselect', 'Area', 'Area', {
+                                                            labelPosition: "top",
+                                                            value: '1', options: [
+                                                                { id: '1', value: "-- select --" },
+                                                                { id: 'Hold', value: "Hold" },
+                                                                { id: 'Received', value: "Received" },
+                                                                { id: 'Storage', value: "Storage" },
+                                                                { id: 'TruckSIM', value: "TruckSIM" },
+                                                                { id: 'ShipOut', value: "ShipOut" },
+                                                                { id: 'Pick', value: "Pick" },
+                                                                { id: 'Overflow', value: "Overflow" },
+                                                            ]
+                                                        }),
                                                     ],
                                                 },
                                             ]
@@ -88,6 +101,7 @@ var header_LocationMaster = function () {
                                                                     console.log(setTable('dataT1', json.data));
                                                                     ele('win_add').hide();
                                                                     ele('Location_Code').setValue('');
+                                                                    ele('Area').setValue('1');
                                                                 }, null,
                                                                     function (json) {
                                                                         /* ele('find').callEvent("onItemClick", []); */
@@ -104,6 +118,7 @@ var header_LocationMaster = function () {
                                             onItemClick: function () {
                                                 ele('win_add').hide();
                                                 ele('Location_Code').setValue('');
+                                                ele('Area').setValue('1');
                                             }
                                         }
                                     }),
@@ -124,7 +139,7 @@ var header_LocationMaster = function () {
             head: "Edit (แก้ไขข้อมูล)", top: 50, position: "center",
             body:
             {
-                view: "form", scroll: false, id: $n("win_edit_form"), width: 600,
+                view: "form", scroll: false, id: $n("win_edit_form"), width: 500,
                 elements:
                     [
                         {
@@ -136,7 +151,23 @@ var header_LocationMaster = function () {
                                                 {
                                                     cols: [
                                                         vw2('text', 'Location_ID_edit', 'Location_ID', 'Location ID.', { labelPosition: "top", disabled: true, hidden: 1 }),
-                                                        vw2('text', 'Location_Code_edit', 'Location_Code', 'Location Code', { labelPosition: "top", disabled: false}),
+                                                        vw2('text', 'Location_Code_edit', 'Location_Code', 'Location Code', { labelPosition: "top", disabled: false }),
+                                                        vw2('richselect', 'Area_edit', 'Area', 'Area', {
+                                                            labelPosition: "top",
+                                                            value: '', options: [
+                                                                { id: 'Hold', value: "Hold" },
+                                                                { id: 'Received', value: "Received" },
+                                                                { id: 'Storage', value: "Storage" },
+                                                                { id: 'TruckSIM', value: "TruckSIM" },
+                                                                { id: 'ShipOut', value: "ShipOut" },
+                                                                { id: 'Pick', value: "Pick" },
+                                                                { id: 'Overflow', value: "Overflow" },
+                                                            ]
+                                                        }),
+                                                    ],
+                                                },
+                                                {
+                                                    cols: [
                                                         vw2('richselect', 'Status_edit', 'Status', 'Status', {
                                                             labelPosition: "top",
                                                             value: 'ACTIVE', options: [
@@ -144,6 +175,7 @@ var header_LocationMaster = function () {
                                                                 { id: 'INACTIVE', value: "INACTIVE" },
                                                             ]
                                                         }),
+                                                        {}
                                                     ],
                                                 },
 
@@ -156,7 +188,7 @@ var header_LocationMaster = function () {
                                 [
                                     {},
                                     vw1('button', 'edit', 'Save (บันทึก)', {
-                                        type: 'form', width: 150,
+                                        type: 'form', width: 120,
                                         on: {
                                             onItemClick: function () {
                                                 var obj = ele('win_edit_form').getValues();

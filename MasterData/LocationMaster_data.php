@@ -27,14 +27,18 @@ include('../php/connection.php');
 if ($type <= 10) //data
 {
 	if ($type == 1) {
+
 		$sql = "SELECT 
-		BIN_TO_UUID(Location_ID,true) as Location_ID,
-		Location_Code, 
-		Status,
-		Area,
-		date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
-		FROM tbl_location_master";
+			BIN_TO_UUID(Location_ID, TRUE) AS Location_ID,
+			Location_Code,
+			Status,
+			Area,
+			DATE_FORMAT(Creation_Date, '%d/%m/%y') AS Creation_Date
+		FROM
+			tbl_location_master;";
+
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 10 && $type <= 20) //insert
@@ -45,47 +49,59 @@ if ($type <= 10) //data
 		$dataParams = array(
 			'obj',
 			'obj=>Location_Code:s:0:3',
+			'obj=>Area:s:0:3',
 		);
 		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
 		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
 
 		$mysqli->autocommit(FALSE);
 		try {
-			$sql = "SELECT Location_Code FROM tbl_location_master 
-			where Location_Code = '$Location_Code'";
+			$sql = "SELECT 
+				Location_Code
+			FROM
+				tbl_location_master
+			WHERE
+				Location_Code = '$Location_Code';";
 			if ((sqlError($mysqli, __LINE__, $sql, 1))->num_rows > 0) {
 				throw new Exception('มี Location_Code นี้แล้ว');
 			}
 
 			$sql = "INSERT INTO tbl_location_master (
 				Location_Code,
+				Area,
 			Creation_Date,
 			Creation_DateTime,
 			Created_By_ID,
 			Last_Updated_Date,
 			Last_Updated_DateTime,
 			Updated_By_ID)
-			values (
+            values (
 				'$Location_Code',
+			'$Area',
 			curdate(),
 			now(),
 			$cBy,
 			curdate(),
 			now(),
-			$cBy)";
+			$cBy);";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้');
 			}
+
 			$mysqli->commit();
 
-			$sql = "SELECT Location_Code,
-			BIN_TO_UUID(Location_ID,true) as Location_ID, 
-			Status,
-			Area,
-			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
-			FROM tbl_location_master";
+			$sql = "SELECT 
+				Location_Code,
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID,
+				Status,
+				Area,
+				DATE_FORMAT(Creation_Date, '%d/%m/%y') AS Creation_Date
+			FROM
+				tbl_location_master;";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 		} catch (Exception $e) {
 			$mysqli->rollback();
@@ -101,6 +117,7 @@ if ($type <= 10) //data
 			'obj',
 			'obj=>Location_ID:s:0:0',
 			'obj=>Location_Code:s:0:3',
+			'obj=>Area:s:0:3',
 			'obj=>Status:s:0:1',
 		);
 		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
@@ -109,7 +126,14 @@ if ($type <= 10) //data
 		$mysqli->autocommit(FALSE);
 		try {
 
-			$sql = "SELECT Location_ID from tbl_location_master where Location_ID = UUID_TO_BIN('$Location_ID',true) limit 1;";
+			$sql = "SELECT 
+				Location_ID
+			FROM
+				tbl_location_master
+			WHERE
+				Location_ID = UUID_TO_BIN('$Location_ID', TRUE)
+			LIMIT 1;";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -118,31 +142,36 @@ if ($type <= 10) //data
 				$Location_ID = $row['Location_ID'];
 			}
 
-			
 
 			$sql = "UPDATE tbl_location_master 
-			set Location_Code ='$Location_Code',
-			Status = '$Status',
-			Creation_Date = curdate(),
-			Creation_DateTime = now(),
-			Created_By_ID = $cBy,
-			Last_Updated_Date = curdate(),
-			Last_Updated_DateTime = now(),
-			Updated_By_ID = $cBy
-			where Location_ID = '$Location_ID'";
+			SET 
+				Location_Code = '$Location_Code',
+				Area = '$Area',
+				Status = '$Status',
+				Creation_Date = CURDATE(),
+				Creation_DateTime = NOW(),
+				Created_By_ID = $cBy,
+				Last_Updated_Date = CURDATE(),
+				Last_Updated_DateTime = NOW(),
+				Updated_By_ID = $cBy
+			WHERE
+				Location_ID = '$Location_ID';";
+
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถแก้ไขข้อมูลได้'.__LINE__);
+				throw new Exception('ไม่สามารถแก้ไขข้อมูลได้' . __LINE__);
 			}
 
 			$mysqli->commit();
 
-			$sql = "SELECT Location_Code,
-			BIN_TO_UUID(Location_ID,true) as Location_ID,
-			Status,
-			Area,
-			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
-			FROM tbl_location_master";
+			$sql = "SELECT 
+				Location_Code,
+				BIN_TO_UUID(Location_ID,true) as Location_ID,
+				Status,
+				Area,
+				date_format(Creation_Date, '%d/%m/%y') AS Creation_Date
+			FROM 
+				tbl_location_master";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			$data =  jsonRow($re1, true, 0);
 			closeDBT($mysqli, 1, $data);
