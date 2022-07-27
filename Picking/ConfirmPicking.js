@@ -2,7 +2,7 @@ var header_ConfirmPicking = function () {
     var menuName = "ConfirmPicking_", fd = "Picking/" + menuName + "data.php";
 
     function init() {
-        webix.UIManager.setFocus(ele('PS_Number'));
+        loadData();
     };
 
     function ele(name) {
@@ -44,8 +44,13 @@ var header_ConfirmPicking = function () {
 
     function loadData(btn) {
         var obj = ele('form1').getValues();
-        ajax(fd, obj, 2, function (json) {
-            setTable('dataT1', json.data);
+        ajax(fd, obj, 1, function (json) {
+            if (json.data.header.length > 0) {
+                ele('PS_Number').disable();
+                
+                ele('form1').setValues(json.data.header[0]);
+                setTable('dataT1', json.data.body);
+            }
         }, btn);
     };
 
@@ -76,7 +81,6 @@ var header_ConfirmPicking = function () {
                                         webix.UIManager.setFocus(ele('Package_Number'));
                                         ele('Package_Number').setValue('');
                                         ele('FG_Serial_Number').setValue('');
-                                        //ele('FG_Serial_Number').setValue('');
 
                                     }, null,
 
@@ -84,23 +88,9 @@ var header_ConfirmPicking = function () {
                                             webix.UIManager.setFocus(ele('Package_Number'));
                                             ele('Package_Number').setValue('');
                                             ele('FG_Serial_Number').setValue('');
-                                            //ele('Package_Number').disable();
                                         });
 
                                 }
-                                else if (webix.UIManager.getNext(view).config.type == 'line') {
-
-                                    //webix.UIManager.setFocus(webix.UIManager.getNext(webix.UIManager.getNext(view)));
-                                    //view.disable();
-                                    webix.UIManager.setFocus(ele('Package_Number'));
-
-                                }
-
-                                else {
-
-                                    webix.UIManager.setFocus(ele('Package_Number'));
-                                }
-
 
                                 if (view.config.name == 'PS_Number') {
 
@@ -108,7 +98,6 @@ var header_ConfirmPicking = function () {
                                     var obj = ele('form1').getValues();
                                     console.log(obj);
                                     ajax(fd, obj, 2, function (json) {
-                                        //loadData();
                                         setTable('dataT1', json.data);
                                         webix.UIManager.setFocus(ele('Package_Number'));
                                         ele('PS_Number').disable();
@@ -126,8 +115,6 @@ var header_ConfirmPicking = function () {
 
                                 else if (webix.UIManager.getNext(view).config.type == 'line') {
 
-                                    //webix.UIManager.setFocus(webix.UIManager.getNext(webix.UIManager.getNext(view)));
-                                    //view.disable();
                                     webix.UIManager.setFocus(ele('FG_Serial_Number'));
 
                                 }
@@ -150,30 +137,7 @@ var header_ConfirmPicking = function () {
                                             },
                                             ),
                                             vw1("text", 'Package_Number', "Package Number", { width: 250 }),
-                                            vw1("text", 'FG_Serial_Number', "Serial Number", { width: 250 }),
-                                            // {
-                                            //     rows: [
-                                            //         {},
-                                            //         vw1('button', 'find', 'Find (ค้นหา)', {
-                                            //             width: 100,
-                                            //             on: {
-                                            //                 onItemClick: function () {
-                                            //                     var obj = ele('form1').getValues();
-                                            //                     console.log(obj);
-                                            //                     ajax(fd, obj, 2, function (json) {
-                                            //                         ele('confirm').show();
-                                            //                         setTable('dataT1', json.data);
-                                            //                     }, null,
-                                            //                         function (json) {
-                                            //                             ele('PS_Number').setValue('');
-                                            //                             ele('confirm').hide();
-                                            //                             ele('dataT1').clearAll();
-                                            //                         });
-                                            //                 }
-                                            //             }
-                                            //         }),
-                                            //     ]
-                                            // },
+                                            vw1("text", 'FG_Serial_Number', "Serial Number", { width: 250 }),   
                                             {
                                                 rows: [
                                                     {},
@@ -240,7 +204,7 @@ var header_ConfirmPicking = function () {
                                     { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
                                     { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
                                     { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
-                                    //{ id: "Pick_Number", header: ["Pick_Number", { content: "textFilter" }], width: 100 },
+                                    { id: "Pick_Number", header: ["Pick_Number", { content: "textFilter" }], width: 100 },
                                     //{ id: "Status_Picking", header: ["Status_Picking", { content: "textFilter" }], width: 100 },
                                     { id: "Confirm_Picking_DateTime", header: ["Confirm Picking DateTime", { content: "textFilter" }], width: 200 },
                                 ],

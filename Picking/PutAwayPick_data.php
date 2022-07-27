@@ -36,16 +36,25 @@ if ($type <= 10) //data
 		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
 		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
 
-		$sql = "SELECT tph.PS_Number,
-		tiv.Package_Number,
-		tiv.FG_Serial_Number,
-		tiv.Qty,
-		tiv.Area,
-		tlm.Location_Code
-		FROM tbl_inventory tiv
-		inner join tbl_picking_header tph on tiv.Picking_Header_ID = tph.Picking_Header_ID
-		left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID
-		where tph.PS_Number = '$PS_Number' and tiv.Package_Number = '$Package_Number';";
+		$sql = "SELECT 
+			tph.PS_Number,
+			tiv.Package_Number,
+			tiv.FG_Serial_Number,
+			tiv.Qty,
+			tiv.Area,
+			tlm.Location_Code
+		FROM
+			tbl_inventory tiv
+				INNER JOIN
+			tbl_picking_header tph ON tiv.Picking_Header_ID = tph.Picking_Header_ID
+				INNER JOIN
+			tbl_picking_pre tpp ON tpp.FG_Serial_Number = tiv.FG_Serial_Number
+				LEFT JOIN
+			tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
+		WHERE
+			tph.PS_Number = '$PS_Number'
+				AND tiv.Package_Number = '$Package_Number'
+				AND tpp.status = 'COMPLETE';";
 
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 
@@ -62,49 +71,63 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			$sql = "SELECT
-			BIN_TO_UUID(Picking_Header_ID,true) as Picking_Header_ID
-			from tbl_picking_header
-			where PS_Number = '$PS_Number' and Status_Picking = 'COMPLETE'";
+			$sql = "SELECT 
+				BIN_TO_UUID(Picking_Header_ID, TRUE) AS Picking_Header_ID
+			FROM
+				tbl_picking_header
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
 			$Picking_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Picking_Header_ID'];
 
-			$sql = "SELECT
-			Area
-			from tbl_inventory
-			where BIN_TO_UUID(Picking_Header_ID,true) = '$Picking_Header_ID' 
-			and Package_Number = '$Package_Number' and Area = 'Pick'";
+			$sql = "SELECT 
+				Area
+			FROM
+				tbl_inventory
+			WHERE
+				BIN_TO_UUID(Picking_Header_ID, TRUE) = '$Picking_Header_ID'
+					AND Package_Number = '$Package_Number'
+					AND Area = 'Pick';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows > 0) {
 				throw new Exception('PS นี้ทำการ Put away ไปเรียบร้อยแล้ว' . __LINE__);
 			}
 
-			$sql = "SELECT
-			Area
-			from tbl_inventory
-			where BIN_TO_UUID(Picking_Header_ID,true) = '$Picking_Header_ID' 
-			and Package_Number = '$Package_Number' and Area = 'Storage'";
-			//exit($sql);
+			$sql = "SELECT 
+				Area
+			FROM
+				tbl_inventory
+			WHERE
+				BIN_TO_UUID(Picking_Header_ID, TRUE) = '$Picking_Header_ID'
+					AND Package_Number = '$Package_Number'
+					AND Area = 'Storage';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
 
-			$sql = "SELECT
-			BIN_TO_UUID(Location_ID,true) as Location_ID
-			from tbl_location_master where Location_Code = '$Location_Code'";
+			$sql = "SELECT 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
+			FROM
+				tbl_location_master
+			WHERE
+				Location_Code = '$Location_Code';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
 			}
 
-			$sql = "SELECT
-			BIN_TO_UUID(Location_ID,true) as Location_ID,
-			Area
-			from tbl_location_master where Location_Code = '$Location_Code' and Area = 'Pick';";
+			$sql = "SELECT 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID, Area
+			FROM
+				tbl_location_master
+			WHERE
+				Location_Code = '$Location_Code'
+					AND Area = 'Pick';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('Location นี้ไม่อยู่ใน Area Pick' . __LINE__);
@@ -112,18 +135,69 @@ if ($type <= 10) //data
 
 			$mysqli->commit();
 
-			$sql = "SELECT tph.PS_Number,
-			tiv.Package_Number,
-			tiv.FG_Serial_Number,
-			tiv.Qty,
-			tiv.Area,
-			tlm.Location_Code
-			FROM tbl_inventory tiv
-			inner join tbl_picking_header tph on tiv.Picking_Header_ID = tph.Picking_Header_ID
-			left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID
-			where tph.PS_Number = '$PS_Number' and tiv.Package_Number = '$Package_Number';";
+			$sql = "SELECT 
+				tph.PS_Number,
+				tiv.Package_Number,
+				tiv.FG_Serial_Number,
+				tiv.Qty,
+				tiv.Area,
+				tlm.Location_Code
+			FROM
+				tbl_inventory tiv
+					INNER JOIN
+				tbl_picking_header tph ON tiv.Picking_Header_ID = tph.Picking_Header_ID
+					INNER JOIN
+				tbl_picking_pre tpp ON tpp.FG_Serial_Number = tiv.FG_Serial_Number
+					LEFT JOIN
+				tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
+			WHERE
+				tph.PS_Number = '$PS_Number'
+					AND tiv.Package_Number = '$Package_Number';";
 
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
+	} else if ($type == 3) {
+		$dataParams = array(
+			'obj',
+			'obj=>PS_Number:s:0:0',
+			'obj=>Package_Number:s:0:0',
+			'obj=>Location_Code:s:0:0',
+		);
+		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
+		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
+
+		$mysqli->autocommit(FALSE);
+		try {
+
+			$sql = "SELECT 
+				tph.PS_Number,
+				tiv.Package_Number,
+				tiv.FG_Serial_Number,
+				tiv.Qty,
+				tiv.Area,
+				tlm.Location_Code
+			FROM
+				tbl_inventory tiv
+					INNER JOIN
+				tbl_picking_header tph ON tiv.Picking_Header_ID = tph.Picking_Header_ID
+					INNER JOIN
+				tbl_picking_pre tpp ON tpp.FG_Serial_Number = tiv.FG_Serial_Number
+					LEFT JOIN
+				tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
+			WHERE
+				tph.PS_Number = '$PS_Number'
+					AND tiv.Package_Number = '$Package_Number'
+					AND tpp.status = 'COMPLETE';";
+
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
 
 			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 		} catch (Exception $e) {
@@ -152,19 +226,26 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			$sql = "SELECT
-			BIN_TO_UUID(Picking_Header_ID,true) as Picking_Header_ID
-			from tbl_picking_header
-			where PS_Number = '$PS_Number' and Status_Picking = 'COMPLETE'";
+			$sql = "SELECT 
+				BIN_TO_UUID(Picking_Header_ID, TRUE) AS Picking_Header_ID
+			FROM
+				tbl_picking_header
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
 			$Picking_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Picking_Header_ID'];
 
-			$sql = "SELECT
-			BIN_TO_UUID(Location_ID,true) as Location_ID
-			from tbl_location_master where Location_Code = '$Location_Code' and Area = 'Pick';";
+			$sql = "SELECT 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
+			FROM
+				tbl_location_master
+			WHERE
+				Location_Code = '$Location_Code'
+					AND Area = 'Pick';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('Location นี้ไม่อยู่ใน Area Pick' . __LINE__);
@@ -173,10 +254,14 @@ if ($type <= 10) //data
 				$Location_ID = $row['Location_ID'];
 			}
 
-			$sql = "SELECT
-			BIN_TO_UUID(Location_ID,true) as Location_ID
-			from tbl_inventory where BIN_TO_UUID(Picking_Header_ID,true) = '$Picking_Header_ID' 
-			and Package_Number = '$Package_Number' and Pick_Status = 'Y'";
+			$sql = "SELECT 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
+			FROM
+				tbl_inventory
+			WHERE
+				BIN_TO_UUID(Picking_Header_ID, TRUE) = '$Picking_Header_ID'
+					AND Package_Number = '$Package_Number'
+					AND Pick_Status = 'Y';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
@@ -185,9 +270,12 @@ if ($type <= 10) //data
 				$Old_Location_ID = $row['Location_ID'];
 			}
 
-			$sql = "SELECT
-			Location_Code
-			from tbl_location_master where BIN_TO_UUID(Location_ID,true) = '$Old_Location_ID'";
+			$sql = "SELECT 
+				Location_Code
+			FROM
+				tbl_location_master
+			WHERE
+				BIN_TO_UUID(Location_ID, TRUE) = '$Old_Location_ID';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
@@ -199,12 +287,15 @@ if ($type <= 10) //data
 			//exit($From_Location_Code.' , '.$Location_Code);
 
 			//อัพเดท Area ใน tbl_inventory
-			$sql = "UPDATE tbl_inventory tiv
-			set tiv.Area = 'Pick',
-			tiv.Location_ID = UUID_TO_BIN('$Location_ID',true),
-			tiv.Last_Updated_DateTime = now(),
-			tiv.Updated_By_ID = $cBy
-			where BIN_TO_UUID(tiv.Picking_Header_ID,true) = '$Picking_Header_ID' and tiv.Package_Number = '$Package_Number'";
+			$sql = "UPDATE tbl_inventory tiv 
+			SET 
+				tiv.Area = 'Pick',
+				tiv.Location_ID = UUID_TO_BIN('$Location_ID', TRUE),
+				tiv.Last_Updated_DateTime = NOW(),
+				tiv.Updated_By_ID = $cBy
+			WHERE
+				BIN_TO_UUID(tiv.Picking_Header_ID, TRUE) = '$Picking_Header_ID'
+					AND tiv.Package_Number = '$Package_Number'";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);

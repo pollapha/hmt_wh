@@ -68,8 +68,20 @@ var header_PutAwayPick = function () {
                             "onSubmit": function (view, e) {
 
                                 if (view.config.name == 'Package_Number') {
-
                                     view.blur();
+                                    var obj = ele('form1').getValues();
+                                    ajax(fd, obj, 3, function (json) {
+                                        loadData();
+                                    }
+                                        , null,
+
+                                        function (json) {
+                                            ele('PS_Number').setValue('');
+                                            ele('Package_Number').setValue('');
+                                            ele('Location_Code').setValue('');
+                                            ele('dataT1').clearAll();
+                                            webix.UIManager.setFocus(ele('PS_Number'));
+                                        });
 
                                 }
                                 if (view.config.name == 'Location_Code') {
@@ -82,11 +94,9 @@ var header_PutAwayPick = function () {
                                         , null,
 
                                         function (json) {
-                                            ele('PS_Number').setValue('');
-                                            ele('Package_Number').setValue('');
                                             ele('Location_Code').setValue('');
                                             ele('dataT1').clearAll();
-                                            webix.UIManager.setFocus(ele('PS_Number'));
+                                            webix.UIManager.setFocus(ele('Package_Number'));
                                         });
                                 }
 

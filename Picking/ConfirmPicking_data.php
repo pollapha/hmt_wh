@@ -27,18 +27,63 @@ include('../php/connection.php');
 if ($type <= 10) //data
 {
 	if ($type == 1) {
-		// $val = checkTXT($mysqli, $_GET['filter']['value']);
-		// if (strlen(trim($val)) == 0) {
-		// 	echo "[]";
-		// }
-		// $sql = "SELECT PS_Number as value
-		// from tbl_picking_header 
-		// where Status_Picking = 'PENDING' and PS_Number like '%$val%' limit 5";
-		// if ($re1 = $mysqli->query($sql)) {
-		// 	echo json_encode(jsonRow($re1, false, 0));
-		// } else {
-		// 	echo "[{ID:0,value:'ERROR'}]";
-		// }
+
+
+		$sql = "SELECT 
+			tph.PS_Number
+		FROM
+			tbl_picking_header tph
+				LEFT JOIN
+			tbl_picking_pre tpp ON tph.Picking_Header_ID = tpp.Picking_Header_ID
+		WHERE
+			tph.Created_By_ID = 1
+				AND tph.Status_Picking = 'PENDING'
+				AND (tpp.ID IS NULL
+				OR tpp.status = 'COMPLETE')
+				AND Total_Qty != 0
+		GROUP BY tph.PS_Number;";
+
+		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+		$header = jsonRow($re1, true, 0);
+
+		$body = [];
+
+		if (count($header) > 0) {
+			$PS_Number = $header[0]['PS_Number'];
+			$sql = "WITH a AS(
+			SELECT 
+				PS_Number,
+				DATE_FORMAT(Pick_Date, '%d/%m/%y') AS Pick_Date,
+				tpp.Package_Number,
+				tpp.FG_Serial_Number,
+				tpp.Qty,
+				DATE_FORMAT(Confirm_Picking_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Picking_DateTime,
+				status,
+				Status_Picking
+			FROM
+				tbl_inventory tiv
+					INNER JOIN
+				tbl_picking_header tph ON tiv.Picking_Header_ID = tph.Picking_Header_ID
+					INNER JOIN
+				tbl_picking_pre tpp ON tph.Picking_Header_ID = tpp.Picking_Header_ID
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'PENDING'
+					AND status = 'COMPLETE')
+			SELECT a.*, Pick_Number from tbl_inventory tiv
+			inner join a ON a.FG_Serial_Number = tiv.FG_Serial_Number
+			GROUP BY FG_Serial_Number;";
+
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+			$body = jsonRow($re1, true, 0);
+		}
+
+		$returnData = ['header' => $header, 'body' => $body];
+
+		closeDBT($mysqli, 1, $returnData);
 	} else if ($type == 2) {
 		$dataParams = array(
 			'obj',
@@ -51,19 +96,33 @@ if ($type <= 10) //data
 
 		try {
 
-			$sql = "SELECT PS_Number,
-			date_format(Pick_Date, '%d/%m/%y') AS Pick_Date,
-			ti.Package_Number,
-			ti.FG_Serial_Number,
-			ti.Qty,
-			date_format(Confirm_Picking_DateTime, '%d/%m/%y %H:%i') AS Confirm_Picking_DateTime,
-			Pick_Number,
-			Status_Picking
-			FROM tbl_picking_header ph
-			inner join tbl_inventory ti on ti.Picking_Header_ID = ph.Picking_Header_ID
-			where PS_Number = '$PS_Number' and Status_Picking = 'PENDING'
-			group by ti.FG_Serial_Number";
+			$sql = "WITH a AS(
+			SELECT 
+				PS_Number,
+				DATE_FORMAT(Pick_Date, '%d/%m/%y') AS Pick_Date,
+				tpp.Package_Number,
+				tpp.FG_Serial_Number,
+				tpp.Qty,
+				DATE_FORMAT(Confirm_Picking_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Picking_DateTime,
+				status,
+				Status_Picking
+			FROM
+				tbl_inventory tiv
+					INNER JOIN
+				tbl_picking_header tph ON tiv.Picking_Header_ID = tph.Picking_Header_ID
+					INNER JOIN
+				tbl_picking_pre tpp ON tph.Picking_Header_ID = tpp.Picking_Header_ID
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'PENDING'
+					AND status = 'COMPLETE')
+			SELECT a.*, Pick_Number from tbl_inventory tiv
+			inner join a ON a.FG_Serial_Number = tiv.FG_Serial_Number
+			GROUP BY FG_Serial_Number;";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
@@ -95,32 +154,72 @@ if ($type <= 10) //data
 
 		try {
 
-			$sql = "SELECT PS_Number,
-			date_format(Pick_Date, '%d/%m/%y') AS Pick_Date,
-			ti.Package_Number,
-			ti.FG_Serial_Number,
-			ti.Qty,
-			date_format(Confirm_Picking_DateTime, '%d/%m/%y %H:%i') AS Confirm_Picking_DateTime,
-			Pick_Number,
-			Status_Picking
-			FROM tbl_picking_header ph
-			inner join tbl_inventory ti on ti.Picking_Header_ID = ph.Picking_Header_ID
-			where PS_Number = '$PS_Number' and Status_Picking = 'PENDING' 
-			and ti.Package_Number = '$Package_Number' and ti.FG_Serial_Number = '$FG_Serial_Number'
-			and Pick_Number is not null
-			group by ti.FG_Serial_Number";
-			//exit($sql);
+			$sql = "SELECT 
+				PS_Number,
+				DATE_FORMAT(Pick_Date, '%d/%m/%y') AS Pick_Date,
+				ti.Package_Number,
+				ti.FG_Serial_Number,
+				ti.Qty,
+				DATE_FORMAT(Confirm_Picking_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Picking_DateTime,
+				Pick_Number,
+				Status_Picking
+			FROM
+				tbl_picking_header ph
+					INNER JOIN
+				tbl_inventory ti ON ti.Picking_Header_ID = ph.Picking_Header_ID
+					INNER JOIN
+				tbl_shipping_pre tsp ON tsp.Shipping_Header_ID = ti.Shipping_Header_ID
+			WHERE
+				Status_Picking = 'COMPLETE'
+					AND ti.Package_Number = '$Package_Number'
+					AND ti.FG_Serial_Number = '$FG_Serial_Number'
+					AND Pick_Number IS NOT NULL
+					AND status = 'COMPLETE'
+			GROUP BY ti.FG_Serial_Number;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows > 0) {
+				throw new Exception('Serial_Number นี้ Confirm เรียบร้อยแล้ว' . __LINE__);
+			}
+
+
+			$sql = "SELECT 
+				PS_Number,
+				DATE_FORMAT(Pick_Date, '%d/%m/%y') AS Pick_Date,
+				tiv.Package_Number,
+				tiv.FG_Serial_Number,
+				tiv.Qty,
+				DATE_FORMAT(Confirm_Picking_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Picking_DateTime,
+				Pick_Number,
+				Status_Picking
+			FROM
+				tbl_picking_header tph
+					INNER JOIN
+				tbl_inventory tiv ON tiv.Picking_Header_ID = tph.Picking_Header_ID
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'PENDING'
+					AND tiv.Package_Number = '$Package_Number'
+					AND tiv.FG_Serial_Number = '$FG_Serial_Number'
+					AND Pick_Number IS NOT NULL
+			GROUP BY tiv.FG_Serial_Number;";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows > 0) {
 				throw new Exception('Serial_Number นี้เช็คเรียบร้อยแล้ว' . __LINE__);
 			}
 
-			$sql = "SELECT
-			Qty,
-			Sum(Qty) as Sum_Qty
-			from tbl_picking_pre pp
-			inner join tbl_picking_header ph on pp.Picking_Header_ID = ph.Picking_Header_ID
-			where PS_Number = '$PS_Number' and Status_Picking = 'PENDING' and status = 'COMPLETE'";
+
+			$sql = "SELECT 
+				Qty, SUM(Qty) AS Sum_Qty
+			FROM
+				tbl_picking_pre pp
+					INNER JOIN
+				tbl_picking_header ph ON pp.Picking_Header_ID = ph.Picking_Header_ID
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'PENDING'
+					AND status = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -130,10 +229,18 @@ if ($type <= 10) //data
 				$Sum_Qty = $row['Sum_Qty'];
 			}
 
-			$sql = "SELECT Total_Qty
-			from tbl_picking_header ph
-			inner join tbl_picking_pre pp on pp.Picking_Header_ID = ph.Picking_Header_ID
-			where PS_Number = '$PS_Number' and Status_Picking = 'PENDING' and status = 'COMPLETE'";
+
+
+			$sql = "SELECT 
+				Total_Qty
+			FROM
+				tbl_picking_header ph
+					INNER JOIN
+				tbl_picking_pre pp ON pp.Picking_Header_ID = ph.Picking_Header_ID
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'PENDING'
+					AND status = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -141,25 +248,37 @@ if ($type <= 10) //data
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
 				$Total_Qty = $row['Total_Qty'];
 			}
-
 			//echo ($Total_Qty);
-			//exit();
+			//echo ($Sum_Qty);
 			if ($Total_Qty < $Sum_Qty) {
-				$sql = "UPDATE tbl_picking_header ph
-				inner join tbl_picking_pre pp on pp.Picking_Header_ID = ph.Picking_Header_ID
-				set Total_Qty = Total_Qty+Qty
-				where PS_Number = '$PS_Number' and pp.Package_Number = '$Package_Number' 
-				and pp.FG_Serial_Number = '$FG_Serial_Number' and Status_Picking = 'PENDING' 
-				and status = 'COMPLETE'";
+
+				$sql = "UPDATE tbl_picking_header tph
+						INNER JOIN
+					tbl_picking_pre tpp ON tpp.Picking_Header_ID = tph.Picking_Header_ID 
+				SET 
+					Total_Qty = Total_Qty + Qty
+				WHERE
+					PS_Number = '$PS_Number'
+						AND tpp.Package_Number = '$Package_Number'
+						AND tpp.FG_Serial_Number = '$FG_Serial_Number'
+						AND Status_Picking = 'PENDING'
+						AND status = 'COMPLETE';";
 				sqlError($mysqli, __LINE__, $sql, 1);
 				if ($mysqli->affected_rows == 0) {
 					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 				}
 
-				$sql = "SELECT Total_Qty
-				from tbl_picking_header ph
-				inner join tbl_picking_pre pp on pp.Picking_Header_ID = ph.Picking_Header_ID
-				where PS_Number = '$PS_Number' and Status_Picking = 'PENDING' and status = 'COMPLETE'";
+
+				$sql = "SELECT 
+					Total_Qty
+				FROM
+					tbl_picking_header ph
+						INNER JOIN
+					tbl_picking_pre pp ON pp.Picking_Header_ID = ph.Picking_Header_ID
+				WHERE
+					PS_Number = '$PS_Number'
+						AND Status_Picking = 'PENDING'
+						AND status = 'COMPLETE';";
 				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 				if ($re1->num_rows == 0) {
 					throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -171,11 +290,15 @@ if ($type <= 10) //data
 				//exit();
 
 				$sql = "UPDATE tbl_inventory ti
-				inner join tbl_picking_header ph on ti.Picking_Header_ID = ph.Picking_Header_ID
-				set Pick_Number = $Total_Qty
-				where PS_Number = '$PS_Number' and ti.Package_Number = '$Package_Number' 
-				and ti.FG_Serial_Number = '$FG_Serial_Number' and Status_Picking = 'PENDING'";
-				//exit($sql);
+						INNER JOIN
+					tbl_picking_header ph ON ti.Picking_Header_ID = ph.Picking_Header_ID 
+				SET 
+					Pick_Number = $Total_Qty
+				WHERE
+					PS_Number = '$PS_Number'
+						AND ti.Package_Number = '$Package_Number'
+						AND ti.FG_Serial_Number = '$FG_Serial_Number'
+						AND Status_Picking = 'PENDING';";
 				sqlError($mysqli, __LINE__, $sql, 1);
 				if ($mysqli->affected_rows == 0) {
 					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
@@ -187,18 +310,24 @@ if ($type <= 10) //data
 			$mysqli->commit();
 
 
-			$sql = "SELECT PS_Number,
-			date_format(Pick_Date, '%d/%m/%y') AS Pick_Date,
-			ti.Package_Number,
-			ti.FG_Serial_Number,
-			ti.Qty,
-			date_format(Confirm_Picking_DateTime, '%d/%m/%y %H:%i') AS Confirm_Picking_DateTime,
-			Pick_Number,
-			Status_Picking
-			FROM tbl_picking_header ph
-			inner join tbl_inventory ti on ti.Picking_Header_ID = ph.Picking_Header_ID
-			where PS_Number = '$PS_Number' and Status_Picking = 'PENDING'
-			group by ti.FG_Serial_Number";
+			$sql = "SELECT 
+				PS_Number,
+				DATE_FORMAT(Pick_Date, '%d/%m/%y') AS Pick_Date,
+				ti.Package_Number,
+				ti.FG_Serial_Number,
+				ti.Qty,
+				DATE_FORMAT(Confirm_Picking_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Picking_DateTime,
+				Pick_Number,
+				Status_Picking
+			FROM
+				tbl_picking_header ph
+					INNER JOIN
+				tbl_inventory ti ON ti.Picking_Header_ID = ph.Picking_Header_ID
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'PENDING'
+			GROUP BY ti.FG_Serial_Number;";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -234,15 +363,21 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			$sql = "SELECT
-			BIN_TO_UUID(ph.Picking_Header_ID,true) as Picking_Header_ID,
-			Pick_Date,
-			Part_No,
-			Package_Number,
-			sum(Qty) as Qty
-			from tbl_picking_pre pp
-			inner join tbl_picking_header ph on pp.Picking_Header_ID = ph.Picking_Header_ID
-			where PS_Number = '$PS_Number' and Status_Picking = 'PENDING' and status = 'COMPLETE'";
+
+			$sql = "SELECT 
+				BIN_TO_UUID(ph.Picking_Header_ID, TRUE) AS Picking_Header_ID,
+				Pick_Date,
+				Part_No,
+				Package_Number,
+				SUM(Qty) AS Qty
+			FROM
+				tbl_picking_pre pp
+					INNER JOIN
+				tbl_picking_header ph ON pp.Picking_Header_ID = ph.Picking_Header_ID
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'PENDING'
+					AND status = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -255,46 +390,67 @@ if ($type <= 10) //data
 				$Qty = $row['Qty'];
 			}
 
-			$sql = "SELECT
-			Total_Qty
-			from tbl_picking_header ph
-			where PS_Number = '$PS_Number' and Status_Picking = 'PENDING' and Total_Qty = $Qty";
+
+			$sql = "SELECT 
+				Total_Qty
+			FROM
+				tbl_picking_header ph
+			WHERE
+				PS_Number = '$PS_Number'
+					AND Status_Picking = 'PENDING'
+					AND Total_Qty = $Qty;";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่ครบ' . __LINE__);
 			}
 
-			$sql = "UPDATE tbl_picking_header
-			set Status_Picking = 'COMPLETE',
-			Confirm_Picking_DateTime = now()
-			where PS_Number = '$PS_Number'";
+
+			$sql = "UPDATE tbl_picking_header 
+			SET 
+				Status_Picking = 'COMPLETE',
+				Confirm_Picking_DateTime = NOW()
+			WHERE
+				PS_Number = '$PS_Number';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-			$sql = "UPDATE tbl_inventory
-			set Pick_Status = 'Y'
-			where BIN_TO_UUID(Picking_Header_ID,true) = '$Picking_Header_ID' and Pick_Status = 'N' limit $Qty";
+
+			$sql = "UPDATE tbl_inventory 
+			SET 
+				Pick_Status = 'Y'
+			WHERE
+				BIN_TO_UUID(Picking_Header_ID, TRUE) = '$Picking_Header_ID'
+					AND Pick_Status = 'N' LIMIT $Qty;";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-			$sql = "UPDATE tbl_weld_on_order
-			set PS_No = '$PS_Number',
-			Pick_Qty = $Qty,
-			Pick_Status = 'COMPLETE'
-			where Part_No = '$Part_No' and Delivery_Date = '$Pick_Date'";
+
+			$sql = "UPDATE tbl_weld_on_order 
+			SET 
+				PS_No = '$PS_Number',
+				Pick_Qty = $Qty,
+				Pick_Status = 'COMPLETE'
+			WHERE
+				Part_No = '$Part_No'
+					AND Delivery_Date = '$Pick_Date';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-			$sql = "SELECT
-			BIN_TO_UUID(Location_ID,true) as Location_ID
-			from tbl_inventory where BIN_TO_UUID(Picking_Header_ID,true) = '$Picking_Header_ID' 
-			and Package_Number = '$Package_Number' and Pick_Status = 'Y'";
+
+			$sql = "SELECT 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
+			FROM
+				tbl_inventory
+			WHERE
+				BIN_TO_UUID(Picking_Header_ID, TRUE) = '$Picking_Header_ID'
+					AND Package_Number = '$Package_Number'
+					AND Pick_Status = 'Y';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
@@ -303,9 +459,13 @@ if ($type <= 10) //data
 				$Old_Location_ID = $row['Location_ID'];
 			}
 
-			$sql = "SELECT
-			Location_Code
-			from tbl_location_master where BIN_TO_UUID(Location_ID,true) = '$Old_Location_ID'";
+
+			$sql = "SELECT 
+				Location_Code
+			FROM
+				tbl_location_master
+			WHERE
+				BIN_TO_UUID(Location_ID, TRUE) = '$Old_Location_ID';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);

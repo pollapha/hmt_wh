@@ -180,7 +180,7 @@ var header_UploadWeldOn = function () {
                                         },
                                         columns: [
                                             {
-                                                id: "data22", header: "&nbsp;", width: 40,
+                                                id:  $n("icon_doc"), header: "&nbsp;", width: 40,
                                                 template: function (row) {
                                                     if (row.Is_Header == "YES") {
                                                         return "<span style='cursor:pointer' class='webix_icon fa-file-pdf-o'></span>";
@@ -191,9 +191,9 @@ var header_UploadWeldOn = function () {
                                                 }
                                             },
                                             {
-                                                id: $n("icon_cancel"), header: "&nbsp;", width: 40, template: function (row) {
+                                                id: $n("icon_del"), header: "&nbsp;", width: 40, template: function (row) {
                                                     if (row.Is_Header == "YES") {
-                                                        return "<span style='cursor:pointer' class='webix_icon fa-ban'></span>";
+                                                        return "<span style='cursor:pointer' class='webix_icon fa-trash'></span>";
                                                     }
                                                     else {
                                                         return '';
@@ -216,8 +216,6 @@ var header_UploadWeldOn = function () {
                                             // { id: "Ship_Qty", header: ["Ship Qty", { content: "textFilter" }], width: 100 },
                                             // { id: "Ship_Status", header: ["Ship Status", { content: "textFilter" }], width: 120 },
                                             // { id: "Slide_Status", header: ["Slide Status", { content: "textFilter" }], width: 120 },
-                                            // { id: "KanbanID", header: ["Kanban ID", { content: "textFilter" }], width: 120 },
-                                            // { id: "SNP", header: ["SNP", { content: "textFilter" }], width: 100 },
                                             // { id: "Box_Type", header: ["Box Type", { content: "textFilter" }], width: 120 },
                                         ],
                                         on: {
@@ -234,7 +232,7 @@ var header_UploadWeldOn = function () {
                                                 var data = row.Weld_On_No;
                                                 window.open("print/doc/d-note.php?data=" + data, '_blank');
                                             },
-                                            "fa-ban": function (e, t) {
+                                            "fa-trash": function (e, t) {
                                                 var row = this.getItem(t), datatable = this;
                                                 var obj = row.Weld_On_No;
                                                 console.log('obj : ', obj);
