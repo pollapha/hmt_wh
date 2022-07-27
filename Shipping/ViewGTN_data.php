@@ -248,6 +248,34 @@ if ($type <= 10) //data
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
+			$sql = "WITH a AS (
+				SELECT 
+					GRN_Number,
+					Creation_DateTime,
+					MONTH(Creation_DateTime) AS Creation_Month,
+					period_Date
+				FROM 
+					tbl_shipping_header tsh
+					CROSS JOIN 
+						tbl_period tpr
+				WHERE 
+					YEAR(period_Date) = YEAR(curdate())
+				ORDER BY 
+					GRN_Number, period_Date)
+				SELECT a.*
+				FROM a 
+				WHERE Creation_Month = MONTH(curdate()) 
+				AND GRN_Number = '$GRN_Number'
+				GROUP BY GRN_Number;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
+			}
+
+			//exit('ยกเลิกสำเร็จ');
+
+			//exit('ยกเลิกสำเร็จ');
+
 			$mysqli->commit();
 		} catch (Exception $e) {
 			$mysqli->rollback();
@@ -378,6 +406,32 @@ if ($type <= 10) //data
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
+
+			$sql = "WITH a AS (
+				SELECT 
+					GRN_Number,
+					Creation_DateTime,
+					MONTH(Creation_DateTime) AS Creation_Month,
+					period_Date
+				FROM 
+					tbl_shipping_header tsh
+					CROSS JOIN 
+						tbl_period tpr
+				WHERE 
+					YEAR(period_Date) = YEAR(curdate())
+				ORDER BY 
+					GRN_Number, period_Date)
+				SELECT a.*
+				FROM a 
+				WHERE Creation_Month = MONTH(curdate()) 
+				AND GRN_Number = '$GRN_Number'
+				GROUP BY GRN_Number;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
+			}
+
+			//exit('ยกเลิกสำเร็จ');
 
 			$mysqli->commit();
 		} catch (Exception $e) {

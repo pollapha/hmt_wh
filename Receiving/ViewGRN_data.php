@@ -220,43 +220,42 @@ if ($type <= 10) //data
 			//exit($To_Area . ' , ' . $From_Area);
 
 			$sql = "INSERT INTO
-            tbl_transaction(
-            Receiving_Header_ID,
-            Part_ID,
-            Package_Number,
-            Serial_Number,
-            Qty,
-            From_Area,
-            To_Area,
-            Trans_Type,
-            Creation_DateTime,
-            Created_By_ID,
-            From_Loc_ID,
-            To_Loc_ID,
-            Last_Updated_DateTime,
-            Updated_By_ID)
-        SELECT
-            UUID_TO_BIN('$Receiving_Header_ID',TRUE),
-            tiv.Part_ID ,
-            tiv.Package_Number ,
-            tiv.FG_Serial_Number ,
-            tiv.Qty ,
-            '$To_Area',
-            '$From_Area',
-            'CANCEL',
-            now(),
-            $cBy,
-            UUID_TO_BIN('$To_Loc_ID', TRUE),
-            UUID_TO_BIN('$From_Loc_ID', TRUE),
-            now(),
-            $cBy
-        FROM
-            tbl_receiving_header trh
-        LEFT JOIN 
-            tbl_inventory tiv ON trh.Receiving_Header_ID = tiv.Receiving_Header_ID 
-        WHERE
-            trh.GRN_Number = '$GRN_Number' 
-			;";
+				tbl_transaction(
+				Receiving_Header_ID,
+				Part_ID,
+				Package_Number,
+				Serial_Number,
+				Qty,
+				From_Area,
+				To_Area,
+				Trans_Type,
+				Creation_DateTime,
+				Created_By_ID,
+				From_Loc_ID,
+				To_Loc_ID,
+				Last_Updated_DateTime,
+				Updated_By_ID)
+			SELECT
+				UUID_TO_BIN('$Receiving_Header_ID',TRUE),
+				tiv.Part_ID ,
+				tiv.Package_Number ,
+				tiv.FG_Serial_Number ,
+				tiv.Qty ,
+				'$To_Area',
+				'$From_Area',
+				'CANCEL',
+				now(),
+				$cBy,
+				UUID_TO_BIN('$To_Loc_ID', TRUE),
+				UUID_TO_BIN('$From_Loc_ID', TRUE),
+				now(),
+				$cBy
+			FROM
+				tbl_receiving_header trh
+			LEFT JOIN 
+				tbl_inventory tiv ON trh.Receiving_Header_ID = tiv.Receiving_Header_ID 
+			WHERE
+				trh.GRN_Number = '$GRN_Number';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
@@ -270,6 +269,32 @@ if ($type <= 10) //data
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
+
+			$sql = "WITH a AS (
+				SELECT 
+					GRN_Number,
+					Creation_DateTime,
+					MONTH(Creation_DateTime) AS Creation_Month,
+					period_Date
+				FROM 
+					tbl_receiving_header trh
+					CROSS JOIN 
+						tbl_period tpr
+				WHERE 
+					YEAR(period_Date) = YEAR(curdate())
+				ORDER BY 
+					GRN_Number, period_Date)
+				SELECT a.*
+				FROM a 
+				WHERE Creation_Month = MONTH(curdate()) 
+				AND GRN_Number = '$GRN_Number'
+				GROUP BY GRN_Number;";
+				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+				if ($re1->num_rows == 0) {
+					throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
+				}
+	
+				//exit('ยกเลิกสำเร็จ');
 
 			$mysqli->commit();
 		} catch (Exception $e) {
@@ -344,42 +369,69 @@ if ($type <= 10) //data
 			//exit($Area);
 
 			$sql = "INSERT INTO
-            tbl_transaction(
-            Receiving_Header_ID,
-            Part_ID,
-            Package_Number,
-            Serial_Number,
-            Qty,
-            From_Area,
-            To_Area,
-            Trans_Type,
-            Creation_DateTime,
-            Created_By_ID,
-            Last_Updated_DateTime,
-            Updated_By_ID)
-        SELECT
-            UUID_TO_BIN('$Receiving_Header_ID',TRUE),
-            trp.Part_ID ,
-            trp.Package_Number ,
-            trp.FG_Serial_Number ,
-            trp.Qty ,
-            '$Area',
-            '$Area',
-            'CANCEL',
-            now(),
-            $cBy,
-            now(),
-            $cBy
-        FROM
-            tbl_receiving_header trh
-        LEFT JOIN 
-			tbl_receiving_pre trp ON trh.Receiving_Header_ID = trp.Receiving_Header_ID 
-        WHERE
-            trh.GRN_Number = '$GRN_Number';";
+				tbl_transaction(
+				Receiving_Header_ID,
+				Part_ID,
+				Package_Number,
+				Serial_Number,
+				Qty,
+				From_Area,
+				To_Area,
+				Trans_Type,
+				Creation_DateTime,
+				Created_By_ID,
+				Last_Updated_DateTime,
+				Updated_By_ID)
+			SELECT
+				UUID_TO_BIN('$Receiving_Header_ID',TRUE),
+				trp.Part_ID ,
+				trp.Package_Number ,
+				trp.FG_Serial_Number ,
+				trp.Qty ,
+				'$Area',
+				'$Area',
+				'CANCEL',
+				now(),
+				$cBy,
+				now(),
+				$cBy
+			FROM
+				tbl_receiving_header trh
+			LEFT JOIN 
+				tbl_receiving_pre trp ON trh.Receiving_Header_ID = trp.Receiving_Header_ID 
+			WHERE
+				trh.GRN_Number = '$GRN_Number';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถยกเลิกข้อมูลได้' . __LINE__);
 			}
+
+
+			$sql = "WITH a AS (
+			SELECT 
+				GRN_Number,
+				Creation_DateTime,
+				MONTH(Creation_DateTime) AS Creation_Month,
+				period_Date
+			FROM 
+				tbl_receiving_header trh
+				CROSS JOIN 
+					tbl_period tpr
+			WHERE 
+				YEAR(period_Date) = YEAR(curdate())
+			ORDER BY 
+				GRN_Number, period_Date)
+			SELECT a.*
+			FROM a 
+			WHERE Creation_Month = MONTH(curdate()) 
+			AND GRN_Number = '$GRN_Number'
+			GROUP BY GRN_Number;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
+			}
+
+			//exit('ยกเลิกสำเร็จ');
 
 			$mysqli->commit();
 		} catch (Exception $e) {
