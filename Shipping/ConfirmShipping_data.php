@@ -27,18 +27,63 @@ include('../php/connection.php');
 if ($type <= 10) //data
 {
 	if ($type == 1) {
-		// $val = checkTXT($mysqli, $_GET['filter']['value']);
-		// if (strlen(trim($val)) == 0) {
-		// 	echo "[]";
-		// }
-		// $sql = "SELECT GTN_Number as value
-		// from tbl_shipping_header 
-		// where Status_Shipping = 'PENDING' and GTN_Number like '%$val%' limit 5";
-		// if ($re1 = $mysqli->query($sql)) {
-		// 	echo json_encode(jsonRow($re1, false, 0));
-		// } else {
-		// 	echo "[{ID:0,value:'ERROR'}]";
-		// }
+
+
+		$sql = "SELECT 
+			tsh.GTN_Number
+		FROM
+			tbl_shipping_header tsh
+				LEFT JOIN
+			tbl_shipping_pre tsp ON tsh.Shipping_Header_ID = tsp.Shipping_Header_ID
+		WHERE
+			tsh.Created_By_ID = 1
+				AND tsh.Status_Shipping = 'PENDING'
+				AND (tsp.ID IS NULL
+				OR tsp.status = 'COMPLETE')
+				AND Total_Qty != 0
+		GROUP BY tsh.GTN_Number;";
+
+		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+		$header = jsonRow($re1, true, 0);
+
+		$body = [];
+
+		if (count($header) > 0) {
+			$GTN_Number = $header[0]['GTN_Number'];
+			$sql = "WITH a AS(
+			SELECT 
+				GTN_Number,
+				DATE_FORMAT(Ship_Date, '%d/%m/%y') AS Ship_Date,
+				tsp.Package_Number,
+				tsp.FG_Serial_Number,
+				tsp.Qty,
+				DATE_FORMAT(Confirm_Shipping_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Shipping_DateTime,
+				status,
+				Status_Shipping
+			FROM
+				tbl_inventory tiv
+					INNER JOIN
+				tbl_shipping_header tsh ON tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
+					INNER JOIN
+				tbl_shipping_pre tsp ON tsh.Shipping_Header_ID = tsp.Shipping_Header_ID
+			WHERE
+				GTN_Number = '$GTN_Number'
+					AND Status_Shipping = 'PENDING'
+					AND status = 'COMPLETE')
+			SELECT a.*, Ship_Number from tbl_inventory tiv
+			inner join a ON a.FG_Serial_Number = tiv.FG_Serial_Number
+			GROUP BY FG_Serial_Number;";
+
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+			$body = jsonRow($re1, true, 0);
+		}
+
+		$returnData = ['header' => $header, 'body' => $body];
+
+		closeDBT($mysqli, 1, $returnData);
 	} else if ($type == 2) {
 		$dataParams = array(
 			'obj',
@@ -51,18 +96,30 @@ if ($type <= 10) //data
 
 		try {
 
-			$sql = "SELECT GTN_Number,
-			date_format(Ship_Date, '%d/%m/%y') AS Ship_Date,
-			ti.Package_Number,
-			ti.FG_Serial_Number,
-			ti.Qty,
-			date_format(Confirm_Shipping_DateTime, '%d/%m/%y %H:%i') AS Confirm_Shipping_DateTime,
-			Ship_Number,
-			Status_Shipping
-			FROM tbl_shipping_header sh
-			inner join tbl_inventory ti on ti.Shipping_Header_ID = sh.Shipping_Header_ID
-			where GTN_Number = '$GTN_Number' and Status_Shipping = 'PENDING'
-			group by ti.FG_Serial_Number";
+			$sql = "WITH a AS(
+			SELECT 
+				GTN_Number,
+				DATE_FORMAT(Ship_Date, '%d/%m/%y') AS Ship_Date,
+				tsp.Package_Number,
+				tsp.FG_Serial_Number,
+				tsp.Qty,
+				DATE_FORMAT(Confirm_Shipping_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Shipping_DateTime,
+				status,
+				Status_Shipping
+			FROM
+				tbl_inventory tiv
+					INNER JOIN
+				tbl_shipping_header tsh ON tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
+					INNER JOIN
+				tbl_shipping_pre tsp ON tsh.Shipping_Header_ID = tsp.Shipping_Header_ID
+			WHERE
+				GTN_Number = '$GTN_Number'
+					AND Status_Shipping = 'PENDING'
+					AND status = 'COMPLETE')
+			SELECT a.*, Ship_Number from tbl_inventory tiv
+			inner join a ON a.FG_Serial_Number = tiv.FG_Serial_Number
+			GROUP BY FG_Serial_Number;";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -95,32 +152,72 @@ if ($type <= 10) //data
 
 		try {
 
-			$sql = "SELECT GTN_Number,
-			date_format(Ship_Date, '%d/%m/%y') AS Ship_Date,
-			ti.Package_Number,
-			ti.FG_Serial_Number,
-			ti.Qty,
-			date_format(Confirm_Shipping_DateTime, '%d/%m/%y %H:%i') AS Confirm_Shipping_DateTime,
-			Ship_Number,
-			Status_Shipping
-			FROM tbl_shipping_header sh
-			inner join tbl_inventory ti on ti.Shipping_Header_ID = sh.Shipping_Header_ID
-			where GTN_Number = '$GTN_Number' and Status_Shipping = 'PENDING' 
-			and ti.Package_Number = '$Package_Number' and ti.FG_Serial_Number = '$FG_Serial_Number'
-			and Ship_Number is not null
-			group by ti.FG_Serial_Number";
+			$sql = "SELECT 
+				GTN_Number,
+				DATE_FORMAT(Ship_Date, '%d/%m/%y') AS Ship_Date,
+				ti.Package_Number,
+				ti.FG_Serial_Number,
+				ti.Qty,
+				DATE_FORMAT(Confirm_Shipping_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Shipping_DateTime,
+				Ship_Number,
+				Status_Shipping
+			FROM
+				tbl_shipping_header sh
+					INNER JOIN
+				tbl_inventory ti ON ti.Shipping_Header_ID = sh.Shipping_Header_ID
+					INNER JOIN
+				tbl_shipping_pre tsp ON tsp.Shipping_Header_ID = ti.Shipping_Header_ID
+			WHERE
+				Status_Shipping = 'COMPLETE'
+					AND ti.Package_Number = '$Package_Number'
+					AND ti.FG_Serial_Number = '$FG_Serial_Number'
+					AND Ship_Number IS NOT NULL
+					AND status = 'COMPLETE'
+			GROUP BY ti.FG_Serial_Number;";
+			//exit($sql);
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows > 0) {
+				throw new Exception('Serial_Number นี้ Confirm เรียบร้อยแล้ว' . __LINE__);
+			}
+
+			$sql = "SELECT 
+				GTN_Number,
+				DATE_FORMAT(Ship_Date, '%d/%m/%y') AS Ship_Date,
+				ti.Package_Number,
+				ti.FG_Serial_Number,
+				ti.Qty,
+				DATE_FORMAT(Confirm_Shipping_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Shipping_DateTime,
+				Ship_Number,
+				Status_Shipping
+			FROM
+				tbl_shipping_header sh
+					INNER JOIN
+				tbl_inventory ti ON ti.Shipping_Header_ID = sh.Shipping_Header_ID
+					WHERE
+				GTN_Number = '$GTN_Number'
+					AND Status_Shipping = 'PENDING'
+					AND ti.Package_Number = '$Package_Number'
+					AND ti.FG_Serial_Number = '$FG_Serial_Number'
+					AND Ship_Number IS NOT NULL
+			GROUP BY ti.FG_Serial_Number;";
 			//exit($sql);
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows > 0) {
 				throw new Exception('Serial_Number นี้เช็คเรียบร้อยแล้ว' . __LINE__);
 			}
 
-			$sql = "SELECT
-			Qty,
-			Sum(Qty) as Sum_Qty
-			from tbl_shipping_pre sp
-			inner join tbl_shipping_header sh on sp.Shipping_Header_ID = sh.Shipping_Header_ID
-			where GTN_Number = '$GTN_Number' and Status_Shipping = 'PENDING' and status = 'COMPLETE'";
+			$sql = "SELECT 
+				Qty, SUM(Qty) AS Sum_Qty
+			FROM
+				tbl_shipping_pre sp
+					INNER JOIN
+				tbl_shipping_header sh ON sp.Shipping_Header_ID = sh.Shipping_Header_ID
+			WHERE
+				GTN_Number = '$GTN_Number'
+					AND Status_Shipping = 'PENDING'
+					AND status = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -130,10 +227,16 @@ if ($type <= 10) //data
 				$Sum_Qty = $row['Sum_Qty'];
 			}
 
-			$sql = "SELECT Total_Qty
-			from tbl_shipping_header sh
-			inner join tbl_shipping_pre sp on sp.Shipping_Header_ID = sh.Shipping_Header_ID
-			where GTN_Number = '$GTN_Number' and Status_Shipping = 'PENDING' and status = 'COMPLETE'";
+			$sql = "SELECT 
+				Total_Qty
+			FROM
+				tbl_shipping_header sh
+					INNER JOIN
+				tbl_shipping_pre sp ON sp.Shipping_Header_ID = sh.Shipping_Header_ID
+			WHERE
+				GTN_Number = '$GTN_Number'
+					AND Status_Shipping = 'PENDING'
+					AND status = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -146,21 +249,33 @@ if ($type <= 10) //data
 			//echo ($Sum_Qty);
 			//exit();
 			if ($Total_Qty < $Sum_Qty) {
+
 				$sql = "UPDATE tbl_shipping_header sh
-				inner join tbl_shipping_pre sp on sp.Shipping_Header_ID = sh.Shipping_Header_ID
-				set Total_Qty = Total_Qty+Qty
-				where GTN_Number = '$GTN_Number' and sp.Package_Number = '$Package_Number' 
-				and sp.FG_Serial_Number = '$FG_Serial_Number' and Status_Shipping = 'PENDING' 
-				and status = 'COMPLETE'";
+						INNER JOIN
+					tbl_shipping_pre sp ON sp.Shipping_Header_ID = sh.Shipping_Header_ID 
+				SET 
+					Total_Qty = Total_Qty + Qty
+				WHERE
+					GTN_Number = '$GTN_Number'
+						AND sp.Package_Number = '$Package_Number'
+						AND sp.FG_Serial_Number = '$FG_Serial_Number'
+						AND Status_Shipping = 'PENDING'
+						AND status = 'COMPLETE';";
 				sqlError($mysqli, __LINE__, $sql, 1);
 				if ($mysqli->affected_rows == 0) {
 					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 				}
 
-				$sql = "SELECT Total_Qty
-				from tbl_shipping_header sh
-				inner join tbl_shipping_pre sp on sp.Shipping_Header_ID = sh.Shipping_Header_ID
-				where GTN_Number = '$GTN_Number' and Status_Shipping = 'PENDING' and status = 'COMPLETE'";
+				$sql = "SELECT 
+					Total_Qty
+				FROM
+					tbl_shipping_header sh
+						INNER JOIN
+					tbl_shipping_pre sp ON sp.Shipping_Header_ID = sh.Shipping_Header_ID
+				WHERE
+					GTN_Number = '$GTN_Number'
+						AND Status_Shipping = 'PENDING'
+						AND status = 'COMPLETE';";
 				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 				if ($re1->num_rows == 0) {
 					throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -172,10 +287,15 @@ if ($type <= 10) //data
 				//exit();
 
 				$sql = "UPDATE tbl_inventory ti
-				inner join tbl_shipping_header sh on ti.Shipping_Header_ID = sh.Shipping_Header_ID
-				set Ship_Number = $Total_Qty
-				where GTN_Number = '$GTN_Number' and ti.Package_Number = '$Package_Number' 
-				and ti.FG_Serial_Number = '$FG_Serial_Number' and Status_Shipping = 'PENDING'";
+						INNER JOIN
+					tbl_shipping_header sh ON ti.Shipping_Header_ID = sh.Shipping_Header_ID 
+				SET 
+					Ship_Number = $Total_Qty
+				WHERE
+					GTN_Number = '$GTN_Number'
+						AND ti.Package_Number = '$Package_Number'
+						AND ti.FG_Serial_Number = '$FG_Serial_Number'
+						AND Status_Shipping = 'PENDING';";
 				//exit($sql);
 				sqlError($mysqli, __LINE__, $sql, 1);
 				if ($mysqli->affected_rows == 0) {
@@ -188,18 +308,24 @@ if ($type <= 10) //data
 			$mysqli->commit();
 
 
-			$sql = "SELECT GTN_Number,
-			date_format(Ship_Date, '%d/%m/%y') AS Ship_Date,
-			ti.Package_Number,
-			ti.FG_Serial_Number,
-			ti.Qty,
-			date_format(Confirm_Shipping_DateTime, '%d/%m/%y %H:%i') AS Confirm_Shipping_DateTime,
-			Ship_Number,
-			Status_Shipping
-			FROM tbl_shipping_header sh
-			inner join tbl_inventory ti on ti.Shipping_Header_ID = sh.Shipping_Header_ID
-			where GTN_Number = '$GTN_Number' and Status_Shipping = 'PENDING'
-			group by ti.FG_Serial_Number";
+			$sql = "SELECT 
+				GTN_Number,
+				DATE_FORMAT(Ship_Date, '%d/%m/%y') AS Ship_Date,
+				ti.Package_Number,
+				ti.FG_Serial_Number,
+				ti.Qty,
+				DATE_FORMAT(Confirm_Shipping_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Shipping_DateTime,
+				Ship_Number,
+				Status_Shipping
+			FROM
+				tbl_shipping_header sh
+					INNER JOIN
+				tbl_inventory ti ON ti.Shipping_Header_ID = sh.Shipping_Header_ID
+			WHERE
+				GTN_Number = '$GTN_Number'
+					AND Status_Shipping = 'PENDING'
+			GROUP BY ti.FG_Serial_Number;";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);

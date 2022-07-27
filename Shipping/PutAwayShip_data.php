@@ -36,16 +36,24 @@ if ($type <= 10) //data
 		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
 		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
 
-		$sql = "SELECT tsh.GTN_Number,
-		tiv.Package_Number,
-		tiv.FG_Serial_Number,
-		tiv.Qty,
-		tiv.Area,
-		tlm.Location_Code
-		FROM tbl_inventory tiv
-		inner join tbl_shipping_header tsh on tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
-		left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID
-		where tsh.GTN_Number = '$GTN_Number' and tiv.Package_Number = '$Package_Number';";
+		$sql = "SELECT 
+			tsh.GTN_Number,
+			tiv.Package_Number,
+			tiv.FG_Serial_Number,
+			tiv.Qty,
+			tiv.Area,
+			tlm.Location_Code
+		FROM
+			tbl_inventory tiv
+				INNER JOIN
+			tbl_shipping_header tsh ON tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
+				INNER JOIN
+			tbl_shipping_pre tsp ON tiv.FG_Serial_Number = tsp.FG_Serial_Number
+				LEFT JOIN
+			tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
+		WHERE
+			tsh.GTN_Number = '$GTN_Number'
+				AND tiv.Package_Number = '$Package_Number';";
 
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 
@@ -112,18 +120,68 @@ if ($type <= 10) //data
 
 			$mysqli->commit();
 
-			$sql = "SELECT tsh.GTN_Number,
-			tiv.Package_Number,
-			tiv.FG_Serial_Number,
-			tiv.Qty,
-			tiv.Area,
-			tlm.Location_Code
-			FROM tbl_inventory tiv
-			inner join tbl_shipping_header tsh on tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
-			left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID
-			where tsh.GTN_Number = '$GTN_Number' and tiv.Package_Number = '$Package_Number';";
+			$sql = "SELECT 
+				tsh.GTN_Number,
+				tiv.Package_Number,
+				tiv.FG_Serial_Number,
+				tiv.Qty,
+				tiv.Area,
+				tlm.Location_Code
+			FROM
+				tbl_inventory tiv
+					INNER JOIN
+				tbl_shipping_header tsh ON tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
+					INNER JOIN
+				tbl_shipping_pre tsp ON tiv.FG_Serial_Number = tsp.FG_Serial_Number
+					LEFT JOIN
+				tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
+			WHERE
+				tsh.GTN_Number = '$GTN_Number'
+					AND tiv.Package_Number = '$Package_Number';";
 
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
+	} else if ($type == 3) {
+		$dataParams = array(
+			'obj',
+			'obj=>GTN_Number:s:0:0',
+			'obj=>Package_Number:s:0:0',
+			'obj=>Location_Code:s:0:0',
+		);
+		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
+		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
+
+		$mysqli->autocommit(FALSE);
+		try {
+
+			$sql = "SELECT 
+				tsh.GTN_Number,
+				tiv.Package_Number,
+				tiv.FG_Serial_Number,
+				tiv.Qty,
+				tiv.Area,
+				tlm.Location_Code
+			FROM
+				tbl_inventory tiv
+					INNER JOIN
+				tbl_shipping_header tsh ON tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
+					INNER JOIN
+				tbl_shipping_pre tsp ON tiv.FG_Serial_Number = tsp.FG_Serial_Number
+					LEFT JOIN
+				tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
+			WHERE
+				tsh.GTN_Number = '$GTN_Number'
+					AND tiv.Package_Number = '$Package_Number';";
+
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
 
 			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 		} catch (Exception $e) {

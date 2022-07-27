@@ -44,7 +44,7 @@ var header_PutAwayShip = function () {
 
     function loadData(btn) {
         var obj = ele('form1').getValues();
-        ajax(fd, obj, 1, function (json) {
+        ajax(fd, obj, 3, function (json) {
             setTable('dataT1', json.data);
         }, btn);
     };
@@ -68,8 +68,20 @@ var header_PutAwayShip = function () {
                             "onSubmit": function (view, e) {
 
                                 if (view.config.name == 'Package_Number') {
-
                                     view.blur();
+                                    var obj = ele('form1').getValues();
+                                    ajax(fd, obj, 3, function (json) {
+                                        loadData();
+                                    }
+                                        , null,
+
+                                        function (json) {
+                                            ele('GTN_Number').setValue('');
+                                            ele('Package_Number').setValue('');
+                                            ele('Location_Code').setValue('');
+                                            ele('dataT1').clearAll();
+                                            webix.UIManager.setFocus(ele('GTN_Number'));
+                                        });
 
                                 }
                                 if (view.config.name == 'Location_Code') {
@@ -82,11 +94,9 @@ var header_PutAwayShip = function () {
                                         , null,
 
                                         function (json) {
-                                            ele('GTN_Number').setValue('');
-                                            ele('Package_Number').setValue('');
                                             ele('Location_Code').setValue('');
                                             ele('dataT1').clearAll();
-                                            webix.UIManager.setFocus(ele('GTN_Number'));
+                                            webix.UIManager.setFocus(ele('Package_Number'));
                                         });
                                 }
 

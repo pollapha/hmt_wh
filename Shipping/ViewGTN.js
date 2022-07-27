@@ -48,6 +48,75 @@ var header_ViewGTN = function () {
         }, btn);
     };
 
+    var status = [
+        { id: 'PENDING', value: "PENDING" },
+        { id: 'COMPLETE', value: "COMPLETE" },
+        { id: 'CANCEL', value: "CANCEL" },
+    ];
+
+    //edit
+    webix.ui(
+        {
+            view: "window", id: $n("win_edit"), modal: 1, top: 50, position: "center",
+            width: 1000, height: 400,
+            head: {
+                view: "toolbar", cols: [
+                    { width: 4 },
+                    { view: "label", label: "Edit (แก้ไขข้อมูล)", align: 'center' },
+                    {
+                        view: "button", label: 'X', width: 30, align: 'right', type: 'danger',
+                        click: function () {
+                            ele('win_edit').hide();
+                        }
+                    }
+                ]
+            },
+            body:
+            {
+                rows: [
+                    {
+
+                        view: "datatable", id: $n('dataT1'), headerRowHeight: 20, rowLineHeight: 25, rowHeight: 25, resizeColumn: true, css: { "font-size": "13px" },
+                        columns: [
+                            { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
+                            { id: "GTN_Number", header: ["GTN Number", { content: "textFilter" }], width: 140 },
+                            { id: "Ship_Date", header: ["Ship Date", { content: "textFilter" }], width: 140 },
+                            { id: "status", header: ["Status", { content: "textFilter" }], editor: "richselect", collection: status, width: 100 },
+                            { id: "Part_No", header: ["Part No.", { content: "textFilter" }], width: 140 },
+                            { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 180 },
+                            { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
+                            { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
+                        ],
+                        editable: true,
+                        editaction: "custom",
+                        select: "cell",
+                        on: {
+                            onItemClick: function (data, prevent) {
+                                this.editCell(data.row, data.column);
+                                var row = this.getItem(data), datatable = this;
+                                console.log(row);
+                                this.attachEvent("onAfterEditStop", function (obj, editor, ignoreUpdate) {
+                                    if (obj.value != obj.old) {
+                                        var obj = row.PS_Number.concat("/", row.FG_Serial_Number).concat("/", row.status);
+                                        console.log(obj);
+                                        ajax(fd, obj, 22, function (json) {
+                                            setTable('dataT1', json.data);
+                                            //webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'บันทึกสำเร็จ', callback: function () { } });
+                                        }, null,
+                                            function (json) {
+                                            });
+                                    }
+                                });
+                            },
+                        }
+
+                    },
+                ]
+
+
+            },
+        });
+
     return {
         view: "scrollview",
         scroll: "native-y",
@@ -114,6 +183,9 @@ var header_ViewGTN = function () {
                                             if (item.Is_Header == 'YES' && item.Confirm_Shipping_DateTime != null && item.Status_Shipping == 'COMPLETE') {
                                                 item.$css = { "background": "#afeac8", "font-weight": "bold" };
                                             }
+                                            if (item.Is_Header == 'YES' && item.Confirm_Shipping_DateTime != null && item.Confirm_Delivery_DateTime != null && item.Status_Shipping == 'DELIVERY') {
+                                                item.$css = { "background": "#b2d9ff", "font-weight": "bold" };
+                                            }
                                             if (item.Is_Header == 'YES' && item.Confirm_Shipping_DateTime == null && item.Status_Shipping == 'PENDING') {
                                                 item.$css = { "background": "#ffffb2", "font-weight": "bold" };
                                             }
@@ -131,13 +203,27 @@ var header_ViewGTN = function () {
                                                 }
                                             }
                                         },
+                                        // {
+                                        //     id: $n("icon_edit"), header: "&nbsp;", width: 40, template: function (row) {
+                                        //         if (row.Is_Header == "YES") {
+                                        //             return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
+                                        //         }
+                                        //         else {
+                                        //             return '';
+                                        //         }
+                                        //     }
+
+                                        // },
                                         {
                                             id: $n("icon_cancel"), header: "&nbsp;", width: 40, template: function (row) {
-                                                if (row.Is_Header == "YES") {
+                                                if (row.Is_Header == "YES" && row.Status_Shipping == 'COMPLETE') {
                                                     return "<span style='cursor:pointer' class='webix_icon fa-ban'></span>";
                                                 }
-                                                else {
-                                                    return '';
+                                                else if (row.Is_Header == "YES" && row.Status_Shipping == 'PENDING'){
+                                                    return "<span style='cursor:pointer' class='webix_icon fa-trash'></span>";
+                                                }
+                                                else{
+                                                    return ''; 
                                                 }
                                             }
                                         },
@@ -146,10 +232,10 @@ var header_ViewGTN = function () {
                                             id: "GTN_Number", header: ["PS Number", { content: "textFilter" }], editor: "", width: 180,
                                             template: "{common.treetable()} #GTN_Number#"
                                         },
-                                        { id: "Ship_Date", header: ["Pick Date", { content: "textFilter" }], width: 140 },
-                                        //{ id: "DN_Number", header: ["DN Number", { content: "textFilter" }], width: 130 },
+                                        { id: "Ship_Date", header: ["Ship Date", { content: "textFilter" }], width: 140 },
                                         { id: "Status_Shipping", header: ["Status", { content: "textFilter" }], width: 100 },
-                                        { id: "Confirm_Shipping_DateTime", header: ["Confirm Shipping DateTime", { content: "textFilter" }], width: 200 },
+                                        { id: "Confirm_Shipping_DateTime", header: ["Confirm Shipping Date", { content: "textFilter" }], width: 220 },
+                                        { id: "Confirm_Delivery_DateTime", header: ["Confirm Delivery Date", { content: "textFilter" }], width: 220 },
                                         { id: "Part_No", header: ["Part No.", { content: "textFilter" }], width: 140 },
                                         { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 180 },
                                         { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
@@ -166,12 +252,37 @@ var header_ViewGTN = function () {
                                             var data = row.GTN_Number;
                                             window.open("print/doc/gtn.php?data=" + data, '_blank');
                                         },
+                                        // "fa-pencil": function (e, t) {
+                                        //     ele('win_edit').show();
+                                        //     var row = this.getItem(t);
+                                        //     var obj = row.PS_Number;
+                                        //     console.log(obj);
+                                        //     ajax(fd, obj, 21, function (json) {
+                                        //         setTable('dataT1', json.data);
+                                        //     }, null,
+                                        //         function (json) {
+                                        //         });
+                                        // },
                                         "fa-ban": function (e, t) {
                                             var row = this.getItem(t), datatable = this;
                                             var obj = row.GTN_Number;
                                             console.log('obj : ', obj);
-                                            msBox('บันทึก', function () {
+                                            msBox('ยกเลิก', function () {
                                                 ajax(fd, obj, 31, function (json) {
+                                                    loadData();
+                                                    webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ยกเลิกสำเร็จ', callback: function () { } });
+
+                                                }, null,
+                                                    function (json) {
+                                                    });
+                                            }, row);
+                                        },
+                                        "fa-trash": function (e, t) {
+                                            var row = this.getItem(t), datatable = this;
+                                            var obj = row.GTN_Number;
+                                            console.log('obj : ', obj);
+                                            msBox('ยกเลิก', function () {
+                                                ajax(fd, obj, 32, function (json) {
                                                     loadData();
                                                     webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ยกเลิกสำเร็จ', callback: function () { } });
 

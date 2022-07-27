@@ -193,7 +193,7 @@ if ($type <= 10) //data
 			//exit($sql);
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถบันทึกข้อมูลได้'. __LINE__);
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
 			$sql = "SELECT
@@ -237,6 +237,133 @@ if ($type <= 10) //data
 			$mysqli->rollback();
 			closeDBT($mysqli, 2, $e->getMessage());
 		}
+	} else if ($type == 13) {
+
+		$dataParams = array(
+			'obj',
+			'obj=>Ship_Date:s:0:1',
+			'obj=>Package_Number:s:0:1',
+		);
+		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
+		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
+
+		$mysqli->autocommit(FALSE);
+		try {
+
+			$sql = "SELECT 
+				BIN_TO_UUID(Part_ID, TRUE) AS Part_ID
+			FROM
+				tbl_inventory
+			WHERE
+				Package_Number = '$Package_Number'
+					AND Ship_Status = 'N'
+					AND Pick_Status = 'Y'
+					AND Area = 'Pick';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			$Part_ID = $re1->fetch_array(MYSQLI_ASSOC)['Part_ID'];
+
+
+			$sql = "SELECT 
+				Part_No
+			FROM
+				tbl_part_master
+			WHERE
+				BIN_TO_UUID(Part_ID, TRUE) = '$Part_ID';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			$Part_No = $re1->fetch_array(MYSQLI_ASSOC)['Part_No'];
+
+
+			$sql = "SELECT 
+				Weld_On_No, Part_No, SNP, PS_No
+			FROM
+				tbl_weld_on_order
+			WHERE
+				Part_No = '$Part_No'
+					AND Delivery_Date = '$Ship_Date' 
+					AND GTN_No = '';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Weld_On_No = $row['Weld_On_No'];
+				$SNP = $row['SNP'];
+			}
+
+
+			$sql = "SELECT 
+				BIN_TO_UUID(Shipping_Header_ID, TRUE) AS Shipping_Header_ID
+			FROM
+				tbl_shipping_header
+			WHERE
+				Ship_Date = '$Ship_Date';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Shipping_Header_ID = $row['Shipping_Header_ID'];
+			}
+
+
+			$sql = "INSERT INTO tbl_shipping_pre (
+				Shipping_Header_ID,
+				Part_ID,
+				Part_No,
+				Package_Number,
+				FG_Serial_Number,
+				Qty,
+				Creation_DateTime)
+				SELECT 
+					UUID_TO_BIN('$Shipping_Header_ID', TRUE),
+					UUID_TO_BIN('$Part_ID', TRUE),
+					'$Part_No',
+					tiv.Package_Number,
+					tiv.FG_Serial_Number,
+					tiv.Qty,
+					NOW()
+				FROM
+					tbl_inventory tiv
+				WHERE
+					Package_Number = '$Package_Number'
+					AND Area = 'Pick'
+					AND Ship_Status = 'N'
+					AND Pick_Status = 'Y'
+				ORDER BY Creation_DateTime
+				LIMIT $SNP;";
+			//exit($sql);
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
+
+			$sql = "UPDATE tbl_inventory 
+			SET 
+			Shipping_Header_ID = UUID_TO_BIN('$Shipping_Header_ID', TRUE)
+			WHERE
+				Package_Number = '$Package_Number'
+					AND Area = 'Pick'
+					AND Ship_Status = 'N'
+					AND Pick_Status = 'Y'
+					ORDER BY Creation_DateTime limit $SNP;";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
+
+			$mysqli->commit();
+
+			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 20 && $type <= 30) //update
 {
@@ -252,8 +379,6 @@ if ($type <= 10) //data
 {
 	if ($_SESSION['xxxRole']->{'Ship'}[1] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 41) {
-
-
 
 		$dataParams = array(
 			'obj',

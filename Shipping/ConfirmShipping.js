@@ -44,8 +44,13 @@ var header_ConfirmShipping = function () {
 
     function loadData(btn) {
         var obj = ele('form1').getValues();
-        ajax(fd, obj, 2, function (json) {
-            setTable('dataT1', json.data);
+        ajax(fd, obj, 1, function (json) {
+            if (json.data.header.length > 0) {
+                ele('GTN_Number').disable();
+
+                ele('form1').setValues(json.data.header[0]);
+                setTable('dataT1', json.data.body);
+            }
         }, btn);
     };
 
@@ -106,7 +111,6 @@ var header_ConfirmShipping = function () {
                                     var obj = ele('form1').getValues();
                                     console.log(obj);
                                     ajax(fd, obj, 2, function (json) {
-                                        //loadData();
                                         setTable('dataT1', json.data);
                                         webix.UIManager.setFocus(ele('Package_Number'));
                                         ele('GTN_Number').disable();
