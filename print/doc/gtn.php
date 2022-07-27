@@ -103,7 +103,7 @@ class PDF extends PDF_Code128
         $header=new easyTable($this->instance, '%{20,20,15,20,15,10}','border:0;font-family:THSarabun;font-size:13;');
         $header->easyCell("Ship Date Time :", 'valign:T;align:L;font-style:B;');
         $header->easyCell(utf8Th($v[0]['Ship_Date']), 'valign:T;align:L;');
-        $header->easyCell("PS Number :", 'valign:T;align:L;font-style:B;');
+        $header->easyCell("GTN Number :", 'valign:T;align:L;font-style:B;');
         $header->easyCell(utf8Th($v[0]['GTN_Number']), 'valign:T;align:L;');
         $header->easyCell("Supplier Name : ", 'valign:T;align:L;font-style:B;');
         $header->easyCell($v[0]['Supplier'], 'valign:T;align:L;');
