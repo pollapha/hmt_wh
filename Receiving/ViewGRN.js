@@ -266,7 +266,7 @@ var header_ViewGRN = function () {
                                                 if (row.Is_Header == "YES" && row.Status_Receiving == 'COMPLETE' && row.Pick_status != 'Y') {
                                                     return "<span style='cursor:pointer' class='webix_icon fa-ban'></span>";
                                                 }
-                                                else if (row.Is_Header == "YES" && row.Status_Receiving == 'CANCEL'){
+                                                else if (row.Is_Header == "YES" && row.Status_Receiving == 'PENDING'){
                                                     return "<span style='cursor:pointer' class='webix_icon fa-trash'></span>";
                                                 }
                                                 else{
