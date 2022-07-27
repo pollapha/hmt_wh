@@ -114,8 +114,8 @@ var header_InventoryOnhand = function()
                                 { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
                                 { id: "Area", header: ["Area", { content: "textFilter" }], width: 100 },
                                 { id: "Location_Code", header: ["Location Code", { content: "textFilter" }], width: 150 },
-                                { id: "Pick_Number", header: ["Pick Number", { content: "textFilter" }], width: 120 },
-                                { id: "Pick_Status", header: ["Pick Status", { content: "textFilter" }], width: 120 },
+                                //{ id: "Pick_Number", header: ["Pick Number", { content: "textFilter" }], width: 120 },
+                                //{ id: "Pick_Status", header: ["Pick Status", { content: "textFilter" }], width: 120 },
                             ],
                             onClick:
                             {

@@ -77,7 +77,7 @@ if ($type <= 10) //data
 		tbl_shipping_header tsh ON ts.Shipping_Header_ID = tsh.Shipping_Header_ID
 			LEFT JOIN
 		tbl_part_master tpm ON ts.Part_ID = tpm.Part_ID
-	ORDER BY Creation_DateTime DESC;";
+	ORDER BY Creation_DateTime DESC, ts.Serial_Number DESC;";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
