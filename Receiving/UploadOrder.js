@@ -42,6 +42,18 @@ var header_UploadOrder = function () {
         ele(tableName).filterByAll();
     };
 
+    function loadData(btn) {
+        console.log(ele("form1").getValues());
+        var obj = ele('form1').getValues();
+
+        ajax(fd, obj, 1, function (json) {
+            setTable('dataT1', json.data);
+        }, null,
+            function (json) {
+                /* ele('find').callEvent("onItemClick", []); */
+            }, btn);
+    };
+
     function exportExcel(btn) {
         var dataT1 = ele("dataT1"), obj = {}, data = [];
         if (dataT1.count() == 0) {
@@ -81,8 +93,7 @@ var header_UploadOrder = function () {
             }, false);
             worker.postMessage({ 'cmd': 'start', 'msg': data });
         }
-        else 
-        { webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: "ไม่พบข้อมูลในตาราง", callback: function () { } }); }
+        else { webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: "ไม่พบข้อมูลในตาราง", callback: function () { } }); }
     };
 
     //edit
@@ -154,8 +165,7 @@ var header_UploadOrder = function () {
                                                             if (res) {
                                                                 ajax(fd, obj, 21, function (json) {
                                                                     ele('win_edit').hide();
-                                                                    setTable('dataT1', json.data);
-                                                                    console.log(setTable('dataT1', json.data));
+                                                                    loadData();
                                                                 }, null,
                                                                     function (json) {
                                                                         /* ele('find').callEvent("onItemClick", []); */
@@ -205,16 +215,7 @@ var header_UploadOrder = function () {
                                             width: 150,
                                             on: {
                                                 onItemClick: function (id, e) {
-                                                    console.log(ele("form1").getValues());
-                                                    var obj = ele('form1').getValues();
-
-                                                    ajax(fd, obj, 1, function (json) {
-                                                        //webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'บันทึกสำเร็จ', callback: function () { } });
-                                                        setTable('dataT1', json.data);
-                                                    }, null,
-                                                        function (json) {
-                                                            /* ele('find').callEvent("onItemClick", []); */
-                                                        });
+                                                    loadData();
                                                 }
                                             }
                                         }),
@@ -251,8 +252,8 @@ var header_UploadOrder = function () {
                                                 ele("Upload_DN").files.data.each(function (obj, index) {
                                                     var formData = new FormData();
                                                     formData.append("upload", obj.file);
-                                                    if($$("mytemplate") == null){
-                                                        ele("save_file").hide();  
+                                                    if ($$("mytemplate") == null) {
+                                                        ele("save_file").hide();
                                                     }
                                                     $.ajax({
                                                         type: 'POST',
@@ -267,17 +268,13 @@ var header_UploadOrder = function () {
                                                                     title: "กรุณายืนยัน", ok: "ใช่", cancel: "ไม่", text: "คุณต้องการบันทึกข้อมูล<br><font color='#27ae60'><b>ใช่</b></font> หรือ <font color='#3498db'><b>ไม่</b></font>",
                                                                     callback: function (res) {
                                                                         if (res) {
-                                                                            ajax(fd, {}, 1, function (json) {
-                                                                                setTable('dataT1', json.data);
-                                                                            }, null,
-                                                                                function (json) {
-                                                                                });
+                                                                            loadData();
                                                                         }
                                                                         var json = JSON.parse(data);
                                                                         ele("Upload_DN").files.data.clearAll();
                                                                         webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: json.mms, callback: function () { } });
                                                                         ele("Upload_DN").enable();
-                                                                        ele("save_file").hide();     
+                                                                        ele("save_file").hide();
                                                                     }
                                                                 });
 
@@ -301,7 +298,7 @@ var header_UploadOrder = function () {
                             {
                                 cols: [
                                     {
-                                        view: "datatable", id: $n("dataT1"), navigation: true, select: "row", editaction: "custom",
+                                        view: "treetable", id: $n("dataT1"), navigation: true, select: "row", editaction: "custom",
                                         resizeColumn: true, autoheight: false, multiselect: true, hover: "myhover",
                                         threeState: true, rowLineHeight: 25, rowHeight: 25,
                                         datatype: "json", headerRowHeight: 25, leftSplit: 4, editable: true,
@@ -314,13 +311,32 @@ var header_UploadOrder = function () {
                                         },
                                         columns: [
                                             {
-                                                id: "icon_edit", header: "&nbsp;", width: 40, template: function (row) {
-                                                    return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
+                                                id: $n("icon_del"), header: "&nbsp;", width: 40, template: function (row) {
+                                                    if (row.Is_Header == "YES") {
+                                                        return "<span style='cursor:pointer' class='webix_icon fa-trash'></span>";
+                                                    }
+                                                    else {
+                                                        return '';
+                                                    }
                                                 }
                                             },
-                                            { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
+                                            {
+                                                id: "icon_edit", header: "&nbsp;", width: 40, template: function (row) {
+                                                    if (row.Is_Header != "YES") {
+                                                        return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
+                                                    }
+                                                    else {
+                                                        return '';
+                                                    }
+                                                }
+
+                                            },
+                                            { id: "No", header: "", css: { "text-align": "right" }, editor: "", width: 40 },
+                                            {
+                                                id: "DN_Number", header: ["DN Number", { content: "textFilter" }], editor: "", width: 180,
+                                                template: "{common.treetable()} #DN_Number#"
+                                            },
                                             { id: "Header_DateTime", header: ["Header DateTime", { content: "textFilter" }], width: 200 },
-                                            { id: "DN_Number", header: ["DN Number", { content: "textFilter" }], width: 150 },
                                             { id: "DN_Date_Text", header: ["DN Date", { content: "textFilter" }], width: 100 },
                                             { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
                                             { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
@@ -335,8 +351,21 @@ var header_UploadOrder = function () {
                                             "fa-pencil": function (e, t) {
                                                 console.log(ele('win_edit').show());
                                                 var row = this.getItem(t);
-                                                console.log(row);
                                                 console.log(ele('win_edit_form').setValues(row));
+                                            },
+                                            "fa-trash": function (e, t) {
+                                                var row = this.getItem(t), datatable = this;
+                                                var obj = row.DN_Number;
+                                                console.log('obj : ', obj);
+                                                msBox('ลบ', function () {
+                                                    ajax(fd, obj, 31, function (json) {
+                                                        loadData();
+                                                        webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ลบสำเร็จ', callback: function () { } });
+
+                                                    }, null,
+                                                        function (json) {
+                                                        });
+                                                }, row);
                                             },
                                         },
                                         on: {

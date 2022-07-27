@@ -5,7 +5,6 @@ header('Cache-Control: no-store, no-cache, must-revalidate');
 header('Cache-Control: post-check=0, pre-check=0', FALSE);
 header('Pragma: no-cache');
 include('../start.php');
-include('../common/common.php');
 session_start();
 if (!isset($_SESSION['xxxID']) || !isset($_SESSION['xxxRole']) || !isset($_SESSION['xxxID']) || !isset($_SESSION['xxxFName'])  || !isset($_SESSION['xxxRole']->{'UploadOrder'})) {
 	echo "{ch:10,data:'เวลาการเชื่อมต่อหมด<br>คุณจำเป็นต้อง login ใหม่'}";
@@ -23,24 +22,16 @@ $cBy = $_SESSION['xxxID'];
 $fName = $_SESSION['xxxFName'];
 $type  = intval($_REQUEST['type']);
 
+require('../vendor/autoload.php');
+include('../common/common.php');
 include('../php/connection.php');
 if ($type <= 10) //data
 {
 	if ($type == 1) {
 
-		$sql = "SELECT date_format(Header_DateTime, '%d/%m/%y %H:%i') AS Header_DateTime,
-		DN_Number,
-		DN_Date_Text,
-		Package_Number,
-		FG_Serial_Number,
-		FG_Date_Text,
-		Part_No,
-		BIN_TO_UUID(DN_ID,true) as DN_ID,
-		date_format(Creation_Date, '%d/%m/%y') AS Creation_Date,
-		Receive_Status
-		FROM tbl_dn_order";
-		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		$re = select_group($mysqli);
+		closeDBT($mysqli, 1, $re);
+		//
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 10 && $type <= 20) //insert
 {
@@ -102,21 +93,6 @@ if ($type <= 10) //data
 			}
 
 			$mysqli->commit();
-
-			$sql = "SELECT date_format(Header_DateTime, '%d/%m/%y %H:%i') AS Header_DateTime,
-			DN_Number,
-			DN_Date_Text,
-			Package_Number,
-			FG_Serial_Number,
-			FG_Date_Text,
-			BIN_TO_UUID(DN_ID,true) as DN_ID,
-			Part_No,
-			date_format(Creation_Date, '%d/%m/%y') AS Creation_Date,
-			Receive_Status
-			FROM tbl_dn_order";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			$data =  jsonRow($re1, true, 0);
-			closeDBT($mysqli, 1, $data);
 		} catch (Exception $e) {
 			$mysqli->rollback();
 			closeDBT($mysqli, 2, $e->getMessage());
@@ -126,11 +102,33 @@ if ($type <= 10) //data
 {
 	if ($_SESSION['xxxRole']->{'UploadOrder'}[3] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 31) {
+
+
+		$DN_Number  = $_POST['obj'];
+
+		$mysqli->autocommit(FALSE);
+		try {
+			$sql = "DELETE FROM tbl_dn_order
+			where DN_Number = '$DN_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถลบข้อมูลได้' . __LINE__);
+			}
+
+			$mysqli->commit();
+
+			$re = select_group($mysqli);
+			closeDBT($mysqli, 1, $re);
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 40 && $type <= 50) //save
 {
 	if ($_SESSION['xxxRole']->{'CustomerMaster'}[1] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 41) {
+
 		if (!isset($_FILES["upload"])) {
 			echo json_encode(array('status' => 'server', 'mms' => 'ไม่พบไฟล์ UPLOAD'));
 			closeDB($mysqli);
@@ -216,7 +214,6 @@ if ($type <= 10) //data
 					FROM tbl_dn_order";
 				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 				closeDBT($mysqli, 1, jsonRow($re1, true, 0));
-				
 			} catch (Exception $e) {
 				$mysqli->rollback();
 				echo '{"status":"server","mms":"' . $e->getMessage() . '","sname":[]}';
@@ -296,6 +293,7 @@ function convertDate($valueV)
 
 	return $v;
 }
+
 function switchDate($d)
 {
 	if (strlen($d[0]) == 4) {
@@ -303,6 +301,53 @@ function switchDate($d)
 	} else {
 		return "'" . "$d[2]-$d[1]-$d[0]" . "'";
 	}
+}
+
+function select_group($mysqli)
+{
+	$sql = "SELECT 
+		DATE_FORMAT(Header_DateTime, '%d/%m/%y %H:%i') AS Header_DateTime,
+		DN_Number,
+		DN_Date_Text,
+		Package_Number,
+		FG_Serial_Number,
+		FG_Date_Text,
+		Part_No,
+		BIN_TO_UUID(DN_ID, TRUE) AS DN_ID,
+		DATE_FORMAT(Creation_Date, '%d/%m/%y') AS Creation_Date,
+		Receive_Status
+	FROM
+		tbl_dn_order
+	ORDER BY DN_ID;";
+	$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+	$value = jsonRow($re1, false, 0);
+	$data = group_by('DN_Number', $value); //group datatable tree
+	$dateset = array();
+	$c = 1;
+	foreach ($data as $key1 => $value1) {
+		$sub = selectColumnFromArray($value1, array(
+			'Header_DateTime',
+			'DN_Date_Text',
+			'Package_Number',
+			'FG_Serial_Number',
+			'FG_Date_Text',
+			'Part_No',
+			'Receive_Status'
+		)); //ที่จะให้อยู่ในตัว Child rows
+		$c2 = 1;
+		foreach ($sub as $key2 => $value2) {
+			$sub[$key2]['DN_Number'] = $c2;
+			$sub[$key2]['Is_Header'] = 'NO';
+			$c2++;
+		}
+
+		$dateset[] =  array(
+			"No" => $c, 'Is_Header' => 'YES', "DN_Number" => $key1,
+			'Total_Item' => count($value1), "open" => 0, "data" => $value1
+		);
+		$c++;
+	}
+	return $dateset;
 }
 
 $mysqli->close();

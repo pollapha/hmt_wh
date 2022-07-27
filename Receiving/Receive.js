@@ -97,11 +97,7 @@ var header_Receive = function () {
                                                                         callback: function (res) {
                                                                             if (res) {
                                                                                 ajax(fd, obj, 11, function (json) {
-                                                                                    ele('create_grn').disable();
-                                                                                    ele('DN_Number').disable();
-                                                                                    ele('GRN_Number').disable();
                                                                                     loadData();
-                                                                                    //console.log(json.data);
                                                                                 }, null,
                                                                                     function (json) {
                                                                                         //ele('find').callEvent("onItemClick", []);
@@ -149,18 +145,17 @@ var header_Receive = function () {
                                     }, null,
 
                                         function (json) {
-
+                                            ele('Package_Number').setValue('');
+                                            ele('FG_Serial_Number').setValue('');
+                                            webix.UIManager.setFocus(ele('Package_Number'));
                                         });
-                                    ele('Package_Number').setValue('');
-                                    ele('FG_Serial_Number').setValue('');
-                                    webix.UIManager.setFocus(ele('Package_Number'));
+
 
                                 }
 
                                 else if (webix.UIManager.getNext(view).config.type == 'line') {
 
                                     webix.UIManager.setFocus(webix.UIManager.getNext(webix.UIManager.getNext(view)));
-
                                     view.disable();
 
                                 }
@@ -177,15 +172,9 @@ var header_Receive = function () {
                                 rows: [
                                     {
                                         cols: [
-                                            vw1("text", 'GRN_Number', "GRN Number", {width: 250}),
-                                            vw2("text", 'Package_Number', 'Package_Number', "Package Number", {
-                                                //required: true, suggest: fd + "?type=2",
-                                                width: 250
-                                            }),
-                                            vw1("text", 'FG_Serial_Number', "Serial Number", {
-                                                //required: true, suggest: fd + "?type=3",
-                                                width: 250 
-                                            }),
+                                            vw1("text", 'GRN_Number', "GRN Number", { width: 250 }),
+                                            vw2("text", 'Package_Number', 'Package_Number', "Package Number", { width: 250 }),
+                                            vw1("text", 'FG_Serial_Number', "Serial Number", { width: 250 }),
                                             {
                                                 rows: [
                                                     {},

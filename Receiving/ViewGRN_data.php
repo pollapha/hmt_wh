@@ -61,6 +61,8 @@ if ($type <= 10) //data
 				echo json_encode(array('ch' => 2, 'data' => "Error SP"));
 			}
 			$mysqli->commit();
+
+			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 		} catch (Exception $e) {
 			$mysqli->rollback();
 			closeDBT($mysqli, 2, $e->getMessage());
@@ -76,6 +78,32 @@ if ($type <= 10) //data
 {
 	if ($_SESSION['xxxRole']->{'ViewGRN'}[2] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 21) {
+
+		$GRN_Number  = $_POST['obj'];
+
+		$sql = "SELECT 
+			GRN_Number,
+			DATE_FORMAT(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
+			DN_Number,
+			Part_No,
+			Qty,
+			Package_Number,
+			FG_Serial_Number,
+			status,
+			DATE_FORMAT(Confirm_Receive_DateTime,
+					'%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
+		FROM
+			tbl_receiving_header rh
+				INNER JOIN
+			tbl_receiving_pre rp ON rp.Receiving_Header_ID = rh.Receiving_Header_ID
+		WHERE
+			Receive_DateTime IS NOT NULL
+				AND GRN_Number = '$GRN_Number'
+		ORDER BY GRN_Number DESC , Part_No DESC , FG_Serial_Number ASC;";
+
+		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 30 && $type <= 40) //delete
 {
@@ -86,54 +114,162 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			$sql = "SELECT
-			rh.Receiving_Header_ID,
-			sum(Qty) as Qty
-			from tbl_receiving_pre rp
-			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where GRN_Number = '$GRN_Number' and status = 'COMPLETE'";
+
+			$sql = "SELECT 
+				BIN_TO_UUID(trh.Receiving_Header_ID, TRUE) AS Receiving_Header_ID,
+				Package_Number,
+				Part_No,
+				SUM(Qty) AS Qty
+			FROM
+				tbl_receiving_pre trp
+					INNER JOIN
+				tbl_receiving_header trh ON trp.Receiving_Header_ID = trh.Receiving_Header_ID
+			WHERE
+				GRN_Number = '$GRN_Number'";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Part_No = $row['Part_No'];
 				$Qty = $row['Qty'];
 				$Receiving_Header_ID = $row['Receiving_Header_ID'];
+				//$Package_Number = $row['Package_Number'];
 			}
 
-			$sql = "UPDATE tbl_receiving_header, tbl_receiving_pre
-			set Status_Receiving = 'CANCEL', status = 'CANCEL'
-			where tbl_receiving_pre.Receiving_Header_ID = tbl_receiving_header.Receiving_Header_ID and
-			GRN_Number = '$GRN_Number' and Status_Receiving = 'PENDING' and status = 'COMPLETE';";
+			$sql = "UPDATE tbl_receiving_header trh,
+				tbl_receiving_pre trp 
+			SET 
+				Status_Receiving = 'CANCEL',
+				status = 'CANCEL',
+				Last_Updated_DateTime = NOW(),
+				Updated_By_ID = $cBy
+			WHERE
+				BIN_TO_UUID(trp.Receiving_Header_ID, TRUE) = BIN_TO_UUID(trh.Receiving_Header_ID, TRUE)
+					AND GRN_Number = '$GRN_Number';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
 			}
 
-			// $sql = "UPDATE tbl_receiving_pre trp
-			// inner join tbl_receiving_header trh on trp.Receiving_Header_ID = trh.Receiving_Header_ID
-			// set trp.status = 'CANCEL'
-			// where GRN_Number = '$GRN_Number' and trh.Status_Receiving = 'PENDING' and trp.status = 'COMPLETE';";
-			// sqlError($mysqli, __LINE__, $sql, 1);
-			// if ($mysqli->affected_rows == 0) {
-			// 	throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
-			// }
 
-			// $sql = "UPDATE tbl_receiving_pre
-			// 	set status = 'CANCEL'
-			// 	where Receiving_Header_ID = '$Receiving_Header_ID' and Status_Receiving = 'PENDING' and Status = 'COMPLETE'";
-			// sqlError($mysqli, __LINE__, $sql, 1);
-			// if ($mysqli->affected_rows == 0) {
-			// 	throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-			// }
+			$sql = "UPDATE tbl_dn_order tdo
+					INNER JOIN
+				tbl_receiving_pre trp ON trp.FG_Serial_Number = tdo.FG_Serial_Number
+					INNER JOIN
+				tbl_receiving_header trh ON trh.Receiving_Header_ID = trp.Receiving_Header_ID 
+			SET 
+				Receive_Status = 'N',
+				tdo.Last_Updated_Date = CURDATE(),
+				tdo.Last_Updated_DateTime = NOW(),
+				tdo.Updated_By_ID = $cBy
+			WHERE
+				GRN_Number = '$GRN_Number'
+					AND Receive_Status = 'Y';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
 
-			// $sql = "UPDATE tbl_transaction
-			// 	set Trans_Type = 'CANCEL'
-			// 	where Receiving_Header_ID = '$Receiving_Header_ID'";
-			// sqlError($mysqli, __LINE__, $sql, 1);
-			// if ($mysqli->affected_rows == 0) {
-			// 	throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-			// }
+			$sql = "SELECT 
+				To_Area,
+				BIN_TO_UUID(To_Loc_ID, TRUE) AS To_Loc_ID,
+				(SELECT Location_Code FROM tbl_location_master where To_Loc_ID = Location_ID )AS From_Loc
+			FROM
+				tbl_transaction tts
+					INNER JOIN
+				tbl_receiving_header trh ON tts.Receiving_Header_ID = trh.Receiving_Header_ID
+					INNER JOIN
+				tbl_part_master tpm ON tts.Part_ID = tpm.Part_ID
+			WHERE
+				GRN_Number = '$GRN_Number'
+					ORDER BY tts.Creation_DateTime DESC LIMIT 1;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$From_Loc = $row['From_Loc'];
+				$To_Area = $row['To_Area'];
+				$To_Loc_ID = $row['To_Loc_ID'];
+			}
+
+			$sql = "SELECT 
+				From_Area,
+				BIN_TO_UUID(From_Loc_ID, TRUE) AS From_Loc_ID,
+				(SELECT Location_Code FROM tbl_location_master where From_Loc_ID = Location_ID )AS To_Loc
+			FROM
+				tbl_transaction tts
+					INNER JOIN
+				tbl_receiving_header trh ON tts.Receiving_Header_ID = trh.Receiving_Header_ID
+					INNER JOIN
+				tbl_part_master tpm ON tts.Part_ID = tpm.Part_ID
+			WHERE
+				GRN_Number = '$GRN_Number'
+					order by tts.Creation_DateTime DESC LIMIT 1;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$To_Loc = $row['To_Loc'];
+				$From_Area = $row['From_Area'];
+				$From_Loc_ID = $row['From_Loc_ID'];
+			}
+
+			//exit($To_Area . ' , ' . $From_Area);
+
+			$sql = "INSERT INTO
+            tbl_transaction(
+            Receiving_Header_ID,
+            Part_ID,
+            Package_Number,
+            Serial_Number,
+            Qty,
+            From_Area,
+            To_Area,
+            Trans_Type,
+            Creation_DateTime,
+            Created_By_ID,
+            From_Loc_ID,
+            To_Loc_ID,
+            Last_Updated_DateTime,
+            Updated_By_ID)
+        SELECT
+            UUID_TO_BIN('$Receiving_Header_ID',TRUE),
+            tiv.Part_ID ,
+            tiv.Package_Number ,
+            tiv.FG_Serial_Number ,
+            tiv.Qty ,
+            '$To_Area',
+            '$From_Area',
+            'CANCEL',
+            now(),
+            $cBy,
+            UUID_TO_BIN('$To_Loc_ID', TRUE),
+            UUID_TO_BIN('$From_Loc_ID', TRUE),
+            now(),
+            $cBy
+        FROM
+            tbl_receiving_header trh
+        LEFT JOIN 
+            tbl_inventory tiv ON trh.Receiving_Header_ID = tiv.Receiving_Header_ID 
+        WHERE
+            trh.GRN_Number = '$GRN_Number' 
+			;";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
+
+
+			$sql = "DELETE FROM tbl_inventory
+			WHERE
+				BIN_TO_UUID(Receiving_Header_ID, TRUE) = '$Receiving_Header_ID';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
 
 			$mysqli->commit();
 		} catch (Exception $e) {
@@ -141,7 +277,115 @@ if ($type <= 10) //data
 			closeDBT($mysqli, 2, $e->getMessage());
 		}
 
+		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		//
+	} else if ($type == 32) {
 
+		$GRN_Number  = $_POST['obj'];
+
+		$mysqli->autocommit(FALSE);
+		try {
+
+			$sql = "SELECT 
+				BIN_TO_UUID(trh.Receiving_Header_ID, TRUE) AS Receiving_Header_ID,
+				Package_Number,
+				Part_No,
+				SUM(Qty) AS Qty
+			FROM
+				tbl_receiving_pre trp
+					INNER JOIN
+				tbl_receiving_header trh ON trp.Receiving_Header_ID = trh.Receiving_Header_ID
+			WHERE
+				GRN_Number = '$GRN_Number';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Part_No = $row['Part_No'];
+				$Qty = $row['Qty'];
+				$Receiving_Header_ID = $row['Receiving_Header_ID'];
+				$Package_Number = $row['Package_Number'];
+			}
+
+			$sql = "UPDATE tbl_receiving_header trh,
+				tbl_receiving_pre trp 
+			SET 
+				Status_Receiving = 'CANCEL',
+				status = 'CANCEL',
+				Last_Updated_DateTime = NOW(),
+				Updated_By_ID = $cBy
+			WHERE
+				BIN_TO_UUID(trp.Receiving_Header_ID, TRUE) = BIN_TO_UUID(trh.Receiving_Header_ID, TRUE)
+					AND GRN_Number = '$GRN_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
+			}
+
+			$sql = "SELECT 
+				trp.Area
+			FROM
+				tbl_receiving_pre trp
+					INNER JOIN
+				tbl_receiving_header trh ON trp.Receiving_Header_ID = trh.Receiving_Header_ID
+			WHERE
+				trh.GRN_Number = 'GRN2207270015'
+			ORDER BY trp.Creation_DateTime DESC
+			LIMIT 1;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Area = $row['Area'];
+			}
+
+			//exit($Area);
+
+			$sql = "INSERT INTO
+            tbl_transaction(
+            Receiving_Header_ID,
+            Part_ID,
+            Package_Number,
+            Serial_Number,
+            Qty,
+            From_Area,
+            To_Area,
+            Trans_Type,
+            Creation_DateTime,
+            Created_By_ID,
+            Last_Updated_DateTime,
+            Updated_By_ID)
+        SELECT
+            UUID_TO_BIN('$Receiving_Header_ID',TRUE),
+            trp.Part_ID ,
+            trp.Package_Number ,
+            trp.FG_Serial_Number ,
+            trp.Qty ,
+            '$Area',
+            '$Area',
+            'CANCEL',
+            now(),
+            $cBy,
+            now(),
+            $cBy
+        FROM
+            tbl_receiving_header trh
+        LEFT JOIN 
+			tbl_receiving_pre trp ON trh.Receiving_Header_ID = trp.Receiving_Header_ID 
+        WHERE
+            trh.GRN_Number = '$GRN_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถยกเลิกข้อมูลได้' . __LINE__);
+			}
+
+			$mysqli->commit();
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
 
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
@@ -154,19 +398,27 @@ if ($type <= 10) //data
 
 function select_group($mysqli)
 {
-	$sql = "SELECT GRN_Number,
-	date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
-	DN_Number,
-    Part_No,
-	Qty,
-    Package_Number,
-    FG_Serial_Number,
-	Status_Receiving,
-	date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
-	from tbl_receiving_header rh
-    inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-    WHERE Receive_DateTime IS NOT NULL and status = 'COMPLETE'
-	ORDER BY GRN_Number DESC, Part_No DESC, FG_Serial_Number ASC;";
+	$sql = "SELECT 
+		GRN_Number,
+		DATE_FORMAT(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
+		DN_Number,
+		Part_No,
+		trp.Qty,
+		trp.Package_Number,
+		trp.FG_Serial_Number,
+		Status_Receiving,
+		Pick_status,
+		DATE_FORMAT(Confirm_Receive_DateTime,
+				'%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
+	FROM
+		tbl_receiving_header trh
+			INNER JOIN
+		tbl_receiving_pre trp ON trp.Receiving_Header_ID = trh.Receiving_Header_ID
+			LEFT JOIN
+		tbl_inventory tiv ON trp.FG_Serial_Number = tiv.FG_Serial_Number
+	WHERE
+		Receive_DateTime IS NOT NULL
+	ORDER BY GRN_Number DESC , Part_No DESC , FG_Serial_Number ASC;";
 	$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 	$value = jsonRow($re1, false, 0);
 	$data = group_by('GRN_Number', $value); //group datatable tree
@@ -191,6 +443,7 @@ function select_group($mysqli)
 			"Receive_DateTime" => $value1[0]['Receive_DateTime'],
 			"DN_Number" => $value1[0]['DN_Number'],
 			"Status_Receiving" => $value1[0]['Status_Receiving'],
+			"Pick_status" => $value1[0]['Pick_status'],
 			"Confirm_Receive_DateTime" => $value1[0]['Confirm_Receive_DateTime'],
 			'Total_Item' => count($value1), "open" => 0, "data" => $sub
 		);
@@ -222,19 +475,25 @@ function excelRow($result, $row = true, $seq = 0)
 
 function sqlexport_excel()
 {
-	$sql = "SELECT GRN_Number,
-	date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
-	DN_Number,
-    Part_No,
-	Qty,
-    Package_Number,
-    FG_Serial_Number,
-	Status_Receiving,
-	date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
-	from tbl_receiving_header rh
-    inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-    WHERE Receive_DateTime IS NOT NULL and status = 'COMPLETE'
-	ORDER BY GRN_Number DESC, Part_No DESC, FG_Serial_Number ASC;";
+	$sql = "SELECT 
+		GRN_Number,
+		DATE_FORMAT(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
+		DN_Number,
+		Part_No,
+		Qty,
+		Package_Number,
+		FG_Serial_Number,
+		Status_Receiving,
+		DATE_FORMAT(Confirm_Receive_DateTime,
+				'%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
+	FROM
+		tbl_receiving_header rh
+			INNER JOIN
+		tbl_receiving_pre rp ON rp.Receiving_Header_ID = rh.Receiving_Header_ID
+	WHERE
+		Receive_DateTime IS NOT NULL
+			AND status = 'COMPLETE'
+	ORDER BY GRN_Number DESC , Part_No DESC , FG_Serial_Number ASC;";
 
 	return $sql;
 }

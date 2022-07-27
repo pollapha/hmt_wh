@@ -28,60 +28,74 @@ include('../php/connection.php');
 if ($type <= 10) //data
 {
 	if ($type == 1) {
+
 		$val = checkTXT($mysqli, $_GET['filter']['value']);
 		if (strlen(trim($val)) == 0) {
 			echo "[]";
 		}
-		$sql = "SELECT DN_Number as value
-		from tbl_dn_order where DN_Number like '%$val%' limit 1";
+
+		$sql = "SELECT 
+			DN_Number AS value
+		FROM
+			tbl_dn_order
+		WHERE
+			DN_Number LIKE '%$val%'
+				AND Receive_Status = 'N'
+		GROUP BY DN_Number
+		LIMIT 5;";
+
 		if ($re1 = $mysqli->query($sql)) {
 			echo json_encode(jsonRow($re1, false, 0));
 		} else {
 			echo "[{ID:0,value:'ERROR'}]";
 		}
 	} else if ($type == 4) {
-		$sql = "SELECT
 
-        	rh.GRN_Number,
+		$sql = "SELECT 
+			trh.GRN_Number, trh.DN_Number
+		FROM
+			tbl_receiving_header trh
+				LEFT JOIN
+			tbl_receiving_pre trp ON trh.Receiving_Header_ID = trp.Receiving_Header_ID
+		WHERE
+			trh.Created_By_ID = $cBy
+				AND trh.Status_Receiving = 'PENDING'
+				AND (trp.ID IS NULL OR trp.status = 'PENDING')
+		GROUP BY trh.GRN_Number;";
 
-        	rh.DN_Number
-
-    	FROM
-
-        	tbl_receiving_header rh
-
-    	LEFT JOIN tbl_receiving_pre rp ON
-
-        	rh.Receiving_Header_ID = rp.Receiving_Header_ID
-
-    	WHERE
-
-        	rh.Created_By_ID = $cBy
-
-        AND rh.Status_Receiving = 'PENDING' AND (rp.ID IS NULL OR rp.status = 'PENDING') GROUP BY rh.GRN_Number ;";
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 
 		$header = jsonRow($re1, true, 0);
+
 		$body = [];
+
 		if (count($header) > 0) {
 			$GRN_Number = $header[0]['GRN_Number'];
 			$sql = "SELECT 
-			rh.GRN_Number,
-			rh.DN_Number,
-			rp.Package_Number,
-			rp.FG_Serial_Number,
-			rp.Part_No,
-			pm.Part_Name,
-			rp.Qty
-			FROM tbl_receiving_pre rp
-			inner join tbl_part_master pm on rp.Part_ID = pm.Part_ID
-			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where rh.GRN_Number = '$GRN_Number' and rp.status = 'PENDING'";
+				trh.GRN_Number,
+				trh.DN_Number,
+				trp.Package_Number,
+				trp.FG_Serial_Number,
+				trp.Part_No,
+				tpm.Part_Name,
+				trp.Qty
+			FROM
+				tbl_receiving_pre trp
+					INNER JOIN
+				tbl_part_master tpm ON trp.Part_ID = tpm.Part_ID
+					INNER JOIN
+				tbl_receiving_header trh ON trp.Receiving_Header_ID = trh.Receiving_Header_ID
+			WHERE
+				trh.GRN_Number = '$GRN_Number'
+					AND trp.status = 'PENDING';";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			$body = jsonRow($re1, true, 0);
 		}
+
 		$returnData = ['header' => $header, 'body' => $body];
-		//$returnData = ['header' => $header];
+
 		closeDBT($mysqli, 1, $returnData);
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 10 && $type <= 20) //insert
@@ -97,13 +111,21 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			
-			$sql = "SELECT DN_Number FROM tbl_dn_order
-			where DN_Number = '$DN_Number' limit 1";
+
+			$sql = "SELECT 
+				DN_Number
+			FROM
+				tbl_dn_order
+			WHERE
+				DN_Number = '$DN_Number'
+			LIMIT 1;";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
+
 			$DN_Number = $re1->fetch_array(MYSQLI_ASSOC)['DN_Number'];
 
 			// สร้างเลขที่เอกสาร
@@ -119,7 +141,9 @@ if ($type <= 10) //data
 				Last_Updated_DateTime,
 				Updated_By_ID)
 			values('$GRN_Number', now(), '$DN_Number', now(), $cBy, now(), $cBy)";
+
 			sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
@@ -144,10 +168,17 @@ if ($type <= 10) //data
 		$mysqli->autocommit(FALSE);
 		try {
 
-			$sql = "SELECT Part_No
-			FROM tbl_dn_order
-			where DN_Number = '$DN_Number' and Package_Number = '$Package_Number' and FG_Serial_Number = '$FG_Serial_Number'";
+			$sql = "SELECT 
+				Part_No
+			FROM
+				tbl_dn_order
+			WHERE
+				DN_Number = '$DN_Number'
+					AND Package_Number = '$Package_Number'
+					AND FG_Serial_Number = '$FG_Serial_Number';";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
@@ -155,24 +186,38 @@ if ($type <= 10) //data
 			$Part_Name = getPartName($mysqli, $Part_No);
 			$Part_ID = getPartID($mysqli, $Part_No);
 
-			$sql = "SELECT
-			rp.Part_No
-			FROM tbl_receiving_pre rp
-			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where rp.Part_No = '$Part_No' and rp.Package_Number = '$Package_Number' 
-			and rp.FG_Serial_Number = '$FG_Serial_Number' and (rp.status = 'PENDING' OR rp.status = 'COMPLETE')";
+			$sql = "SELECT 
+				trp.Part_No
+			FROM
+				tbl_receiving_pre trp
+					INNER JOIN
+				tbl_receiving_header trh ON trp.Receiving_Header_ID = trh.Receiving_Header_ID
+			WHERE
+				trp.Part_No = '$Part_No'
+					AND trp.Package_Number = '$Package_Number'
+					AND trp.FG_Serial_Number = '$FG_Serial_Number'
+					AND (trp.status = 'PENDING'
+					OR trp.status = 'COMPLETE');";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($re1->num_rows > 0) {
 				throw new Exception('Order นี้ได้ทำการเพิ่มไปเรียบร้อยแล้ว' . __LINE__);
 			}
 
-			$sql = "SELECT BIN_TO_UUID(Receiving_Header_ID,true) as Receiving_Header_ID
-			FROM tbl_receiving_header
-			where GRN_Number ='$GRN_Number'";
+			$sql = "SELECT 
+				BIN_TO_UUID(Receiving_Header_ID, TRUE) AS Receiving_Header_ID
+			FROM
+				tbl_receiving_header
+			WHERE
+				GRN_Number = '$GRN_Number';";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
+
 			$Receiving_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Receiving_Header_ID'];
 
 			$sql = "INSERT INTO tbl_receiving_pre (
@@ -185,8 +230,8 @@ if ($type <= 10) //data
 				Area,
 				Creation_DateTime,
 				Created_By_ID)
-			values (
-				uuid_to_bin('$Receiving_Header_ID',true),
+				values (
+					uuid_to_bin('$Receiving_Header_ID',true),
 				uuid_to_bin('$Part_ID',true),
 				'$Part_No',
 				'$Package_Number',
@@ -194,12 +239,16 @@ if ($type <= 10) //data
 				1,
 				'Received',
 				now(),
-				$cBy)";
+				$cBy);";
+
 			sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้');
 			}
+
 			$mysqli->commit();
+
 			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 		} catch (Exception $e) {
 			$mysqli->rollback();
@@ -230,39 +279,52 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			$sql = "SELECT
-			BIN_TO_UUID(rh.Receiving_Header_ID,true) as Receiving_Header_ID,
-			sum(Qty) as Qty
-			from tbl_receiving_pre rp
-			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where GRN_Number = '$GRN_Number'";
+			$sql = "SELECT 
+				BIN_TO_UUID(trh.Receiving_Header_ID, TRUE) AS Receiving_Header_ID,
+				SUM(Qty) AS Qty
+			FROM
+				tbl_receiving_pre trp
+					INNER JOIN
+				tbl_receiving_header trh ON trp.Receiving_Header_ID = trh.Receiving_Header_ID
+			WHERE
+				GRN_Number = '$GRN_Number';";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
+
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
 				$Qty = $row['Qty'];
 				$Receiving_Header_ID = $row['Receiving_Header_ID'];
 			}
 
-			$sql = "UPDATE tbl_receiving_header
-			set Total_Qty = $Qty
-			where GRN_Number = '$GRN_Number'";
+			$sql = "UPDATE tbl_receiving_header 
+			SET 
+				Total_Qty = $Qty
+			WHERE
+				GRN_Number = '$GRN_Number';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-			$sql = "UPDATE tbl_receiving_pre
-			set status = 'COMPLETE'
-			where BIN_TO_UUID(Receiving_Header_ID,true) = '$Receiving_Header_ID' and status = 'PENDING'";
-			//exit($sql);
+			$sql = "UPDATE tbl_receiving_pre 
+			SET 
+				status = 'COMPLETE'
+			WHERE
+				BIN_TO_UUID(Receiving_Header_ID, TRUE) = '$Receiving_Header_ID'
+					AND status = 'PENDING';";
+
 			sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
 			$mysqli->commit();
+
 			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 		} catch (Exception $e) {
 			$mysqli->rollback();

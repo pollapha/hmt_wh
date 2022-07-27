@@ -28,12 +28,22 @@ include('../php/connection.php');
 if ($type <= 10) //data
 {
 	if ($type == 1) {
+
 		$val = checkTXT($mysqli, $_GET['filter']['value']);
+
 		if (strlen(trim($val)) == 0) {
 			echo "[]";
 		}
-		$sql = "SELECT GRN_Number as value
-		from tbl_receiving_header where GRN_Number like '%$val%' and Status_Receiving = 'PENDING' limit 5";
+
+		$sql = "SELECT 
+			GRN_Number AS value
+		FROM
+			tbl_receiving_header
+		WHERE
+			GRN_Number LIKE '%$val%'
+				AND Status_Receiving = 'PENDING'
+		LIMIT 5;";
+
 		if ($re1 = $mysqli->query($sql)) {
 			echo json_encode(jsonRow($re1, false, 0));
 		} else {
@@ -51,20 +61,30 @@ if ($type <= 10) //data
 
 		try {
 
-			$sql = "SELECT GRN_Number,
-			date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
-			DN_Number,
-			Package_Number,
-			FG_Serial_Number,
-			Qty,
-			date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
-			FROM tbl_receiving_header rh
-			inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where GRN_Number = '$GRN_Number' and Status_Receiving = 'PENDING' and status = 'COMPLETE'";
+			$sql = "SELECT 
+				GRN_Number,
+				DATE_FORMAT(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
+				DN_Number,
+				Package_Number,
+				FG_Serial_Number,
+				Qty,
+				DATE_FORMAT(Confirm_Receive_DateTime,
+						'%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
+			FROM
+				tbl_receiving_header rh
+					INNER JOIN
+				tbl_receiving_pre rp ON rp.Receiving_Header_ID = rh.Receiving_Header_ID
+			WHERE
+				GRN_Number = '$GRN_Number'
+					AND Status_Receiving = 'PENDING'
+					AND status = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
+
+			closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 		} catch (Exception $e) {
 			$mysqli->rollback();
 			closeDBT($mysqli, 2, $e->getMessage());
@@ -81,17 +101,24 @@ if ($type <= 10) //data
 		$chkPOST = checkParamsAndDelare($_POST, $dataParams, $mysqli);
 		if (count($chkPOST) > 0) closeDBT($mysqli, 2, join('<br>', $chkPOST));
 
-			$sql = "SELECT GRN_Number,
-			date_format(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
+		$sql = "SELECT 
+			GRN_Number,
+			DATE_FORMAT(Receive_DateTime, '%d/%m/%y %H:%i') AS Receive_DateTime,
 			DN_Number,
 			Package_Number,
 			FG_Serial_Number,
 			Qty,
-			date_format(Confirm_Receive_DateTime, '%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
-			FROM tbl_receiving_header rh
-			inner join tbl_receiving_pre rp on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where GRN_Number = '$GRN_Number' and Status_Receiving = 'COMPLETE' and status = 'COMPLETE'";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			DATE_FORMAT(Confirm_Receive_DateTime,
+					'%d/%m/%y %H:%i') AS Confirm_Receive_DateTime
+		FROM
+			tbl_receiving_header rh
+				INNER JOIN
+			tbl_receiving_pre rp ON rp.Receiving_Header_ID = rh.Receiving_Header_ID
+		WHERE
+			GRN_Number = '$GRN_Number'
+				AND Status_Receiving = 'COMPLETE'
+				AND status = 'COMPLETE';";
+		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
@@ -124,23 +151,57 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			$sql = "SELECT
-			rh.Receiving_Header_ID
-			from tbl_receiving_pre rp
-			inner join tbl_receiving_header rh on rp.Receiving_Header_ID = rh.Receiving_Header_ID
-			where GRN_Number = '$GRN_Number' and Status_Receiving = 'PENDING' and status = 'COMPLETE'";
+
+			$sql = "SELECT 
+				BIN_TO_UUID(rh.Receiving_Header_ID, TRUE) AS Receiving_Header_ID,
+				DN_Number,
+				Package_Number,
+				FG_Serial_Number,
+				Qty
+			FROM
+				tbl_receiving_pre rp
+					INNER JOIN
+				tbl_receiving_header rh ON rp.Receiving_Header_ID = rh.Receiving_Header_ID
+			WHERE
+				GRN_Number = '$GRN_Number'
+					AND Status_Receiving = 'PENDING'
+					AND status = 'COMPLETE';";
+
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
 				$Receiving_Header_ID = $row['Receiving_Header_ID'];
+				$DN_Number = $row['DN_Number'];
+				$Package_Number = $row['Package_Number'];
+				$FG_Serial_Number = $row['FG_Serial_Number'];
 			}
 
-			$sql = "UPDATE tbl_receiving_header
-			set Status_Receiving = 'COMPLETE',
-			Confirm_Receive_DateTime = now()
-			where GRN_Number = '$GRN_Number'";
+			$sql = "UPDATE tbl_receiving_header 
+			SET 
+				Status_Receiving = 'COMPLETE',
+				Confirm_Receive_DateTime = NOW()
+			WHERE
+				GRN_Number = '$GRN_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
+
+			$sql = "UPDATE tbl_dn_order tdo
+					INNER JOIN
+				tbl_receiving_header rh ON tdo.DN_Number = rh.DN_Number
+					INNER JOIN
+				tbl_receiving_pre rp ON tdo.FG_Serial_Number = rp.FG_Serial_Number
+			SET 
+				Receive_Status = 'Y'
+			WHERE
+				GRN_Number = '$GRN_Number'
+					AND Status_Receiving = 'COMPLETE'
+					AND status = 'COMPLETE'
+					AND Receive_Status = 'N';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
