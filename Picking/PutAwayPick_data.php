@@ -84,10 +84,11 @@ if ($type <= 10) //data
 			}
 			$Picking_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Picking_Header_ID'];
 
+
 			$sql = "SELECT 
 				Area
 			FROM
-				tbl_inventory
+				tbl_picking_pre
 			WHERE
 				BIN_TO_UUID(Picking_Header_ID, TRUE) = '$Picking_Header_ID'
 					AND Package_Number = '$Package_Number'
@@ -100,7 +101,7 @@ if ($type <= 10) //data
 			$sql = "SELECT 
 				Area
 			FROM
-				tbl_inventory
+				tbl_picking_pre
 			WHERE
 				BIN_TO_UUID(Picking_Header_ID, TRUE) = '$Picking_Header_ID'
 					AND Package_Number = '$Package_Number'
@@ -146,8 +147,6 @@ if ($type <= 10) //data
 				tbl_inventory tiv
 					INNER JOIN
 				tbl_picking_header tph ON tiv.Picking_Header_ID = tph.Picking_Header_ID
-					INNER JOIN
-				tbl_picking_pre tpp ON tpp.FG_Serial_Number = tiv.FG_Serial_Number
 					LEFT JOIN
 				tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
 			WHERE
@@ -185,15 +184,12 @@ if ($type <= 10) //data
 				tbl_inventory tiv
 					INNER JOIN
 				tbl_picking_header tph ON tiv.Picking_Header_ID = tph.Picking_Header_ID
-					INNER JOIN
-				tbl_picking_pre tpp ON tpp.FG_Serial_Number = tiv.FG_Serial_Number
 					LEFT JOIN
 				tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
 			WHERE
 				tph.PS_Number = '$PS_Number'
 					AND tiv.Package_Number = '$Package_Number'
-					AND tpp.status = 'COMPLETE';";
-
+					AND Status_Picking = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -226,6 +222,7 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
+
 			$sql = "SELECT 
 				BIN_TO_UUID(Picking_Header_ID, TRUE) AS Picking_Header_ID
 			FROM
@@ -238,6 +235,7 @@ if ($type <= 10) //data
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
 			$Picking_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Picking_Header_ID'];
+
 
 			$sql = "SELECT 
 				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
@@ -253,6 +251,7 @@ if ($type <= 10) //data
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
 				$Location_ID = $row['Location_ID'];
 			}
+
 
 			$sql = "SELECT 
 				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
@@ -285,6 +284,18 @@ if ($type <= 10) //data
 			}
 
 			//exit($From_Location_Code.' , '.$Location_Code);
+
+			//อัพเดท Area ใน tbl_picking_pre
+			$sql = "UPDATE tbl_picking_pre
+			SET 
+				Area = 'Pick'
+			WHERE
+				BIN_TO_UUID(Picking_Header_ID, TRUE) = '$Picking_Header_ID'
+					AND Package_Number = '$Package_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
 
 			//อัพเดท Area ใน tbl_inventory
 			$sql = "UPDATE tbl_inventory tiv 

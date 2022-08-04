@@ -230,7 +230,6 @@ if ($type <= 10) //data
 			}
 
 
-
 			$sql = "SELECT 
 				Total_Qty
 			FROM
@@ -256,7 +255,9 @@ if ($type <= 10) //data
 						INNER JOIN
 					tbl_picking_pre tpp ON tpp.Picking_Header_ID = tph.Picking_Header_ID 
 				SET 
-					Total_Qty = Total_Qty + Qty
+					Total_Qty = Total_Qty + Qty,
+					Last_Updated_DateTime = NOW(),
+					Updated_By_ID = $cBy
 				WHERE
 					PS_Number = '$PS_Number'
 						AND tpp.Package_Number = '$Package_Number'
@@ -289,15 +290,17 @@ if ($type <= 10) //data
 				//echo ($Total_Qty);
 				//exit();
 
-				$sql = "UPDATE tbl_inventory ti
+				$sql = "UPDATE tbl_inventory tiv
 						INNER JOIN
-					tbl_picking_header ph ON ti.Picking_Header_ID = ph.Picking_Header_ID 
+					tbl_picking_header tph ON tiv.Picking_Header_ID = tph.Picking_Header_ID 
 				SET 
-					Pick_Number = $Total_Qty
+					Pick_Number = $Total_Qty,
+					tiv.Last_Updated_DateTime = NOW(),
+					tiv.Updated_By_ID = $cBy
 				WHERE
 					PS_Number = '$PS_Number'
-						AND ti.Package_Number = '$Package_Number'
-						AND ti.FG_Serial_Number = '$FG_Serial_Number'
+						AND tiv.Package_Number = '$Package_Number'
+						AND tiv.FG_Serial_Number = '$FG_Serial_Number'
 						AND Status_Picking = 'PENDING';";
 				sqlError($mysqli, __LINE__, $sql, 1);
 				if ($mysqli->affected_rows == 0) {
@@ -408,7 +411,9 @@ if ($type <= 10) //data
 			$sql = "UPDATE tbl_picking_header 
 			SET 
 				Status_Picking = 'COMPLETE',
-				Confirm_Picking_DateTime = NOW()
+				Confirm_Picking_DateTime = NOW(),
+				Last_Updated_DateTime = NOW(),
+				Updated_By_ID = $cBy
 			WHERE
 				PS_Number = '$PS_Number';";
 			sqlError($mysqli, __LINE__, $sql, 1);
@@ -416,30 +421,44 @@ if ($type <= 10) //data
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
-
-			$sql = "UPDATE tbl_inventory 
+			$sql = "UPDATE tbl_inventory tiv
+			INNER JOIN tbl_picking_pre tpp ON tiv.FG_Serial_Number = tpp.FG_Serial_Number
 			SET 
-				Pick_Status = 'Y'
+				tiv.Pick_Status = 'Y',
+				tiv.Last_Updated_DateTime = NOW(),
+				tiv.Updated_By_ID = $cBy
 			WHERE
-				BIN_TO_UUID(Picking_Header_ID, TRUE) = '$Picking_Header_ID'
-					AND Pick_Status = 'N' LIMIT $Qty;";
+				BIN_TO_UUID(tiv.Picking_Header_ID, TRUE) = '$Picking_Header_ID';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
 
-			$sql = "UPDATE tbl_weld_on_order 
-			SET 
-				PS_No = '$PS_Number',
-				Pick_Qty = $Qty,
-				Pick_Status = 'COMPLETE'
+			$sql = "SELECT 
+				Weld_On_No, Delivery_Date, Part_No
+			FROM
+				tbl_weld_on_order
 			WHERE
-				Part_No = '$Part_No'
-					AND Delivery_Date = '$Pick_Date';";
-			sqlError($mysqli, __LINE__, $sql, 1);
-			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+				Delivery_Date = '$Pick_Date'
+					AND Part_No = '$Part_No'
+					AND PS_No = '$PS_Number';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+
+				$sql = "UPDATE tbl_weld_on_order 
+				SET 
+					PS_No = '$PS_Number',
+					Pick_Qty = $Qty,
+					Pick_Status = 'COMPLETE'
+				WHERE
+					Part_No = '$Part_No'
+						AND Delivery_Date = '$Pick_Date'
+						AND PS_No = '' LIMIT 1;";
+				sqlError($mysqli, __LINE__, $sql, 1);
+				if ($mysqli->affected_rows == 0) {
+					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+				}
 			}
 
 
@@ -472,6 +491,36 @@ if ($type <= 10) //data
 			}
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
 				$From_Location_Code = $row['Location_Code'];
+			}
+
+			$sql = "SELECT Area, 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
+			FROM 
+				tbl_location_master 
+			WHERE 
+				Location_Code = 'N/A'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Area = $row['Area'];
+				$Location_ID = $row['Location_ID'];
+			}
+			//exit($Area .' , '.$Location_ID); 
+			//tiv.Location_ID = UUID_TO_BIN('$Location_ID', TRUE),
+
+			$sql = "UPDATE tbl_inventory tiv
+			INNER JOIN tbl_picking_pre tpp ON tiv.FG_Serial_Number = tpp.FG_Serial_Number
+			SET 
+				tiv.Area = 'Pick',
+				tiv.Last_Updated_DateTime = NOW(),
+				tiv.Updated_By_ID = $cBy
+			WHERE
+				BIN_TO_UUID(tiv.Picking_Header_ID, TRUE) = '$Picking_Header_ID';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
 			//exit($Old_Location_ID .' , '.$From_Location_Code);

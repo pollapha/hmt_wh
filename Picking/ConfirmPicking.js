@@ -204,7 +204,7 @@ var header_ConfirmPicking = function () {
                                     { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
                                     { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
                                     { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
-                                    { id: "Pick_Number", header: ["Pick_Number", { content: "textFilter" }], width: 100 },
+                                    //{ id: "Pick_Number", header: ["Pick_Number", { content: "textFilter" }], width: 100 },
                                     //{ id: "Status_Picking", header: ["Status_Picking", { content: "textFilter" }], width: 100 },
                                     { id: "Confirm_Picking_DateTime", header: ["Confirm Picking DateTime", { content: "textFilter" }], width: 200 },
                                 ],

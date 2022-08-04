@@ -183,10 +183,14 @@ var header_Pick = function () {
 
                                 ajax(fd, obj4, 12, function (json) {
                                     loadData();
+                                    ele('Package_Number').setValue('');
+                                    ele('FG_Serial_Number').setValue('');
 
                                 }, null,
 
                                     function (json) {
+                                        ele('Package_Number').setValue('');
+                                        ele('FG_Serial_Number').setValue('');
 
                                     });
                                 webix.UIManager.setFocus(ele('Package_Number'));
@@ -360,6 +364,11 @@ var header_Pick = function () {
                                 threeState: true, rowLineHeight: 25, rowHeight: 25,
                                 datatype: "json", headerRowHeight: 25, leftSplit: 2, editable: true,
                                 columns: [
+                                    {
+                                        id: $n("icon_cancel"), header: "&nbsp;", width: 40, template: function (row) {
+                                            return "<span style='cursor:pointer' class='webix_icon fa-trash'></span>";
+                                        }
+                                    },
                                     { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
                                     { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
                                     { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
@@ -369,6 +378,20 @@ var header_Pick = function () {
                                 ],
                                 onClick:
                                 {
+                                    "fa-trash": function (e, t) {
+                                        var row = this.getItem(t), datatable = this;
+                                        var obj = row.PS_Number.concat("/", row.FG_Serial_Number);
+                                        console.log('obj : ', obj);
+                                        msBox('ลบ', function () {
+                                            ajax(fd, obj, 31, function (json) {
+                                                loadData();
+                                                //webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ลบสำเร็จ', callback: function () { } });
+
+                                            }, null,
+                                                function (json) {
+                                                });
+                                        }, row);
+                                    },
                                 },
                                 on: {
                                     // "onEditorChange": function (id, value) {
