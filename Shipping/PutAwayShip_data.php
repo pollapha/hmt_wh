@@ -70,49 +70,65 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			$sql = "SELECT
-			BIN_TO_UUID(Shipping_Header_ID,true) as Shipping_Header_ID
-			from tbl_shipping_header
-			where GTN_Number = '$GTN_Number' and Status_Shipping = 'COMPLETE'";
+			$sql = "SELECT 
+				BIN_TO_UUID(Shipping_Header_ID, TRUE) AS Shipping_Header_ID
+			FROM
+				tbl_shipping_header
+			WHERE
+				GTN_Number = '$GTN_Number'
+					AND Status_Shipping = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
 			$Shipping_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Shipping_Header_ID'];
 
-			$sql = "SELECT
-			Area
-			from tbl_inventory
-			where BIN_TO_UUID(Shipping_Header_ID,true) = '$Shipping_Header_ID' 
-			and Package_Number = '$Package_Number' and Area = 'ShipOut'";
+
+			$sql = "SELECT 
+				Area
+			FROM
+				tbl_shipping_pre
+			WHERE
+				BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID'
+					AND Package_Number = '$Package_Number'
+					AND Area = 'ShipOut';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows > 0) {
 				throw new Exception('GTN นี้ทำการ Put away ไปเรียบร้อยแล้ว' . __LINE__);
 			}
 
-			$sql = "SELECT
-			Area
-			from tbl_inventory
-			where BIN_TO_UUID(Shipping_Header_ID,true) = '$Shipping_Header_ID' 
-			and Package_Number = '$Package_Number' and Area = 'Pick'";
+			$sql = "SELECT 
+				Area
+			FROM
+				tbl_inventory
+			WHERE
+				BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID'
+					AND Package_Number = '$Package_Number'
+					AND Area = 'ShipOut';";
 			//exit($sql);
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
 
-			$sql = "SELECT
-			BIN_TO_UUID(Location_ID,true) as Location_ID
-			from tbl_location_master where Location_Code = '$Location_Code'";
+			$sql = "SELECT 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
+			FROM
+				tbl_location_master
+			WHERE
+				Location_Code = '$Location_Code';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
 			}
 
-			$sql = "SELECT
-			BIN_TO_UUID(Location_ID,true) as Location_ID,
-			Area
-			from tbl_location_master where Location_Code = '$Location_Code' and Area = 'ShipOut';";
+			$sql = "SELECT 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID, Area
+			FROM
+				tbl_location_master
+			WHERE
+				Location_Code = '$Location_Code'
+					AND Area = 'ShipOut';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('Location นี้ไม่อยู่ใน Area ShipOut' . __LINE__);
@@ -131,13 +147,13 @@ if ($type <= 10) //data
 				tbl_inventory tiv
 					INNER JOIN
 				tbl_shipping_header tsh ON tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
-					INNER JOIN
-				tbl_shipping_pre tsp ON tiv.FG_Serial_Number = tsp.FG_Serial_Number
 					LEFT JOIN
 				tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
 			WHERE
 				tsh.GTN_Number = '$GTN_Number'
-					AND tiv.Package_Number = '$Package_Number';";
+					AND tiv.Package_Number = '$Package_Number'
+					AND Status_Shipping = 'COMPLETE';";
+					//exit($sql);
 
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 
@@ -170,14 +186,12 @@ if ($type <= 10) //data
 				tbl_inventory tiv
 					INNER JOIN
 				tbl_shipping_header tsh ON tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
-					INNER JOIN
-				tbl_shipping_pre tsp ON tiv.FG_Serial_Number = tsp.FG_Serial_Number
 					LEFT JOIN
 				tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
 			WHERE
 				tsh.GTN_Number = '$GTN_Number'
-					AND tiv.Package_Number = '$Package_Number';";
-
+					AND tiv.Package_Number = '$Package_Number'
+					AND Status_Shipping = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
@@ -210,19 +224,28 @@ if ($type <= 10) //data
 
 		$mysqli->autocommit(FALSE);
 		try {
-			$sql = "SELECT
-			BIN_TO_UUID(Shipping_Header_ID,true) as Shipping_Header_ID
-			from tbl_shipping_header
-			where GTN_Number = '$GTN_Number' and Status_Shipping = 'COMPLETE'";
+
+			$sql = "SELECT 
+				BIN_TO_UUID(Shipping_Header_ID, TRUE) AS Shipping_Header_ID
+			FROM
+				tbl_shipping_header
+			WHERE
+				GTN_Number = '$GTN_Number'
+					AND Status_Shipping = 'COMPLETE';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล' . __LINE__);
 			}
 			$Shipping_Header_ID = $re1->fetch_array(MYSQLI_ASSOC)['Shipping_Header_ID'];
 
-			$sql = "SELECT
-			BIN_TO_UUID(Location_ID,true) as Location_ID
-			from tbl_location_master where Location_Code = '$Location_Code' and Area = 'ShipOut';";
+
+			$sql = "SELECT 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
+			FROM
+				tbl_location_master
+			WHERE
+				Location_Code = '$Location_Code'
+					AND Area = 'ShipOut';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('Location นี้ไม่อยู่ใน Area ShipOut' . __LINE__);
@@ -231,10 +254,15 @@ if ($type <= 10) //data
 				$Location_ID = $row['Location_ID'];
 			}
 
-			$sql = "SELECT
-			BIN_TO_UUID(Location_ID,true) as Location_ID
-			from tbl_inventory where BIN_TO_UUID(Shipping_Header_ID,true) = '$Shipping_Header_ID' 
-			and Package_Number = '$Package_Number' and Pick_Status = 'Y'";
+
+			$sql = "SELECT 
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID
+			FROM
+				tbl_inventory
+			WHERE
+				BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID'
+					AND Package_Number = '$Package_Number'
+					AND Pick_Status = 'Y';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
@@ -243,9 +271,12 @@ if ($type <= 10) //data
 				$Old_Location_ID = $row['Location_ID'];
 			}
 
-			$sql = "SELECT
-			Location_Code
-			from tbl_location_master where BIN_TO_UUID(Location_ID,true) = '$Old_Location_ID'";
+			$sql = "SELECT 
+				Location_Code
+			FROM
+				tbl_location_master
+			WHERE
+				BIN_TO_UUID(Location_ID, TRUE) = '$Old_Location_ID';";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
@@ -256,13 +287,28 @@ if ($type <= 10) //data
 
 			//exit($From_Location_Code.' , '.$Location_Code);
 
+			//อัพเดท Area ใน tbl_shipping_pre
+			$sql = "UPDATE tbl_shipping_pre
+			SET 
+				Area = 'ShipOut'
+			WHERE
+				BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID'
+					AND Package_Number = '$Package_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
+
 			//อัพเดท Area ใน tbl_inventory
-			$sql = "UPDATE tbl_inventory tiv
-			set tiv.Area = 'ShipOut',
-			tiv.Location_ID = UUID_TO_BIN('$Location_ID',true),
-			tiv.Last_Updated_DateTime = now(),
-			tiv.Updated_By_ID = $cBy
-			where BIN_TO_UUID(tiv.Shipping_Header_ID,true) = '$Shipping_Header_ID' and tiv.Package_Number = '$Package_Number'";
+			$sql = "UPDATE tbl_inventory tiv 
+			SET 
+				tiv.Area = 'ShipOut',
+				tiv.Location_ID = UUID_TO_BIN('$Location_ID', TRUE),
+				tiv.Last_Updated_DateTime = NOW(),
+				tiv.Updated_By_ID = $cBy
+			WHERE
+				BIN_TO_UUID(tiv.Shipping_Header_ID, TRUE) = '$Shipping_Header_ID'
+					AND tiv.Package_Number = '$Package_Number';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);

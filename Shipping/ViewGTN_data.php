@@ -79,212 +79,246 @@ if ($type <= 10) //data
 {
 	if ($_SESSION['xxxRole']->{'ViewGTN'}[2] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 21) {
+		$obj  = $_POST['obj'];
+		$explode = explode("/", $obj);
+		$GTN_Number  = $explode[0];
+		//$FG_Serial_Number  = $explode[1];
+		//exit($GRN_Number .' , '.$FG_Serial_Number);
+
+		$mysqli->autocommit(FALSE);
+		try {
+
+			$sql = "SELECT 
+				BIN_TO_UUID(tsh.Shipping_Header_ID, TRUE) AS Shipping_Header_ID
+			FROM
+				tbl_shipping_header tsh
+			WHERE
+				GTN_Number = '$GTN_Number'";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Shipping_Header_ID = $row['Shipping_Header_ID'];
+			}
+
+			$sql = "SELECT 
+				Package_Number, Location_Code
+			FROM
+				tachi.tbl_inventory tiv
+			INNER JOIN
+				tbl_location_master tlm ON tlm.Location_ID = tiv.Location_ID;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Package_Number = $row['Package_Number'];
+			}
+
+			$sql = "UPDATE tbl_shipping_header 
+			SET 
+				Status_Shipping = 'PENDING',
+				Confirm_Shipping_DateTime = null,
+				Last_Updated_DateTime = NOW(),
+				Updated_By_ID = $cBy
+			WHERE
+				GTN_Number = '$GTN_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
+
+			$sql = "UPDATE tbl_shipping_pre 
+			SET 
+				status = 'PENDING',
+				Area = 'Pick'
+			WHERE 
+				BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
+
+
+			$sql = "SELECT 
+				GTN_Number
+			FROM
+				tbl_transaction tts
+					INNER JOIN
+				tbl_shipping_header tsh ON tts.Shipping_Header_ID = tsh.Shipping_Header_ID
+			WHERE
+				GTN_Number = '$GTN_Number'
+			ORDER BY tts.Creation_DateTime DESC
+			LIMIT 1;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+			if ($re1->num_rows > 0) {
+
+				$sql = "SELECT 
+					To_Area,
+					BIN_TO_UUID(To_Loc_ID, TRUE) AS To_Loc_ID,
+					(SELECT Location_Code FROM tbl_location_master where To_Loc_ID = Location_ID )AS From_Loc
+				FROM
+					tbl_transaction tts
+						INNER JOIN
+					tbl_shipping_header tsh ON tts.Shipping_Header_ID = tsh.Shipping_Header_ID
+						INNER JOIN
+					tbl_part_master tpm ON tts.Part_ID = tpm.Part_ID
+				WHERE
+					GTN_Number = '$GTN_Number'
+						ORDER BY tts.Creation_DateTime DESC LIMIT 1;";
+				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+				if ($re1->num_rows == 0) {
+					throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
+				}
+				while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+					$To_Area = $row['To_Area'];
+					$To_Loc_ID = $row['To_Loc_ID'];
+				}
+
+				$sql = "SELECT 
+					From_Area,
+					BIN_TO_UUID(From_Loc_ID, TRUE) AS From_Loc_ID,
+					(SELECT Location_Code FROM tbl_location_master where From_Loc_ID = Location_ID )AS To_Loc
+				FROM
+					tbl_transaction tts
+						INNER JOIN
+					tbl_shipping_header tsh ON tts.Shipping_Header_ID = tsh.Shipping_Header_ID
+						INNER JOIN
+					tbl_part_master tpm ON tts.Part_ID = tpm.Part_ID
+				WHERE
+					GTN_Number = '$GTN_Number'
+						ORDER BY tts.Creation_DateTime DESC LIMIT 1;";
+				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+				if ($re1->num_rows == 0) {
+					throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
+				}
+				while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+					$From_Area = $row['From_Area'];
+					$From_Loc_ID = $row['From_Loc_ID'];
+				}
+
+				//exit($From_Area .' , '.$To_Area);
+				//exit($From_Loc_ID .' , '.$To_Loc_ID);
+
+				$sql = "INSERT INTO
+					tbl_transaction(
+					Shipping_Header_ID,
+					Part_ID,
+					Package_Number,
+					Serial_Number,
+					Qty,
+					From_Area,
+					To_Area,
+					Trans_Type,
+					Creation_DateTime,
+					Created_By_ID,
+					From_Loc_ID,
+					To_Loc_ID,
+					Last_Updated_DateTime,
+					Updated_By_ID)
+				SELECT
+					UUID_TO_BIN('$Shipping_Header_ID',TRUE),
+					tiv.Part_ID ,
+					tiv.Package_Number ,
+					tiv.FG_Serial_Number ,
+					tiv.Qty ,
+					'ShipOut',
+					'$From_Area',
+					'EDIT',
+					now(),
+					$cBy,
+					UUID_TO_BIN('$To_Loc_ID',TRUE),
+					UUID_TO_BIN('$From_Loc_ID',TRUE),
+					now(),
+					$cBy
+				FROM
+					tbl_shipping_header tsh
+				LEFT JOIN 
+					tbl_inventory tiv ON tsh.Shipping_Header_ID = tiv.Shipping_Header_ID 
+				WHERE
+					tsh.GTN_Number = '$GTN_Number' AND tiv.Package_Number = '$Package_Number';";
+				sqlError($mysqli, __LINE__, $sql, 1);
+				if ($mysqli->affected_rows == 0) {
+					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+				}
+
+				$sql = "UPDATE tbl_inventory tiv
+						INNER JOIN
+					tbl_shipping_pre tsp ON tiv.FG_Serial_Number = tsp.FG_Serial_Number
+						INNER JOIN
+					tbl_shipping_header tsh ON tsp.Shipping_Header_ID = tsh.Shipping_Header_ID 
+				SET 
+					tiv.Area = '$From_Area',
+					tiv.Location_ID = UUID_TO_BIN('$From_Loc_ID',TRUE),
+					tiv.Last_Updated_DateTime = NOW(),
+					tiv.Updated_By_ID = $cBy
+				WHERE
+					GTN_Number = '$GTN_Number';";
+				sqlError($mysqli, __LINE__, $sql, 1);
+				if ($mysqli->affected_rows == 0) {
+					throw new Exception('ไม่สามารถแก้ไขข้อมูลได้' . __LINE__);
+				}
+				//
+			} else {
+				$sql = "INSERT INTO
+					tbl_transaction(
+					Shipping_Header_ID,
+					Part_ID,
+					Package_Number,
+					Serial_Number,
+					Qty,
+					From_Area,
+					To_Area,
+					Trans_Type,
+					Creation_DateTime,
+					Created_By_ID,
+					From_Loc_ID,
+					To_Loc_ID,
+					Last_Updated_DateTime,
+					Updated_By_ID)
+				SELECT
+					UUID_TO_BIN('$Shipping_Header_ID',TRUE),
+					tiv.Part_ID ,
+					tiv.Package_Number ,
+					tiv.FG_Serial_Number ,
+					tiv.Qty ,
+					tiv.Area,
+					tiv.Area,
+					'EDIT',
+					now(),
+					$cBy,
+					tiv.Location_ID,
+					tiv.Location_ID,
+					now(),
+					$cBy
+				FROM
+					tbl_shipping_header tsh
+				LEFT JOIN 
+					tbl_inventory tiv ON tsh.Shipping_Header_ID = tiv.Shipping_Header_ID 
+				WHERE
+					tsh.GTN_Number = '$GTN_Number' AND tiv.Package_Number = '$Package_Number';";
+				sqlError($mysqli, __LINE__, $sql, 1);
+				if ($mysqli->affected_rows == 0) {
+					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+				}
+			}
+
+			//exit('สำเร็จ');
+
+			$mysqli->commit();
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
+
+		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 30 && $type <= 40) //delete
 {
 	if ($_SESSION['xxxRole']->{'ViewGTN'}[3] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 31) {
-
-		$GTN_Number  = $_POST['obj'];
-
-		$mysqli->autocommit(FALSE);
-		try {
-
-
-			$sql = "SELECT 
-				BIN_TO_UUID(tsh.Shipping_Header_ID, TRUE) AS Shipping_Header_ID,
-				Package_Number,
-				Part_No,
-				SUM(Qty) AS Qty
-			FROM
-				tbl_shipping_pre tsp
-					INNER JOIN
-				tbl_shipping_header tsh ON tsp.Shipping_Header_ID = tsh.Shipping_Header_ID
-			WHERE
-				GTN_Number = '$GTN_Number'";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่พบข้อมูล' . __LINE__);
-			}
-			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
-				$Part_No = $row['Part_No'];
-				$Qty = $row['Qty'];
-				$Shipping_Header_ID = $row['Shipping_Header_ID'];
-				$Package_Number = $row['Package_Number'];
-			}
-
-			$sql = "UPDATE tbl_shipping_header sh,
-				tbl_shipping_pre sp 
-			SET 
-				Status_Shipping = 'CANCEL',
-				status = 'CANCEL',
-				Last_Updated_DateTime = NOW(),
-				Updated_By_ID = $cBy
-			WHERE
-				BIN_TO_UUID(sp.Shipping_Header_ID, TRUE) = BIN_TO_UUID(sh.Shipping_Header_ID, TRUE)
-					AND GTN_Number = '$GTN_Number';";
-			sqlError($mysqli, __LINE__, $sql, 1);
-			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
-			}
-
-			$sql = "UPDATE tbl_weld_on_order 
-			SET 
-				GTN_No = '',
-				Ship_Qty = Ship_Qty - $Qty,
-				Ship_Status = 'PENDING'
-			WHERE
-				GTN_No = '$GTN_Number'
-					AND Part_No = '$Part_No';";
-			sqlError($mysqli, __LINE__, $sql, 1);
-			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-			}
-
-			$sql = "SELECT 
-				To_Area,
-				BIN_TO_UUID(To_Loc_ID, TRUE) AS To_Loc_ID,
-				(SELECT Location_Code FROM tbl_location_master where To_Loc_ID = Location_ID )AS From_Loc
-			FROM
-				tbl_transaction tts
-					INNER JOIN
-				tbl_shipping_header tsh ON tts.Shipping_Header_ID = tsh.Shipping_Header_ID
-					INNER JOIN
-				tbl_part_master tpm ON tts.Part_ID = tpm.Part_ID
-			WHERE
-				GTN_Number = '$GTN_Number'
-					ORDER BY tts.Creation_DateTime DESC LIMIT 1;";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
-			}
-			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
-				$From_Loc = $row['From_Loc'];
-				$To_Area = $row['To_Area'];
-				$To_Loc_ID = $row['To_Loc_ID'];
-			}
-
-			$sql = "SELECT 
-				From_Area,
-				BIN_TO_UUID(From_Loc_ID, TRUE) AS From_Loc_ID,
-				(SELECT Location_Code FROM tbl_location_master where From_Loc_ID = Location_ID )AS To_Loc
-			FROM
-				tbl_transaction tts
-					INNER JOIN
-				tbl_shipping_header tsh ON tts.Shipping_Header_ID = tsh.Shipping_Header_ID
-					INNER JOIN
-				tbl_part_master tpm ON tts.Part_ID = tpm.Part_ID
-			WHERE
-				GTN_Number = '$GTN_Number'
-					order by tts.Creation_DateTime DESC LIMIT 1;";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
-			}
-			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
-				$To_Loc = $row['To_Loc'];
-				$From_Area = $row['From_Area'];
-				$From_Loc_ID = $row['From_Loc_ID'];
-			}
-
-			//exit($To_Loc_ID .' , '.$From_Loc_ID);
-
-			$sql = "INSERT INTO
-				tbl_transaction(
-				Shipping_Header_ID,
-				Part_ID,
-				Package_Number,
-				Serial_Number,
-				Qty,
-				From_Area,
-				To_Area,
-				Trans_Type,
-				Creation_DateTime,
-				Created_By_ID,
-				From_Loc_ID,
-				To_Loc_ID,
-				Last_Updated_DateTime,
-				Updated_By_ID)
-			SELECT
-				UUID_TO_BIN('$Shipping_Header_ID',TRUE),
-				ti.Part_ID ,
-				ti.Package_Number ,
-				ti.FG_Serial_Number ,
-				ti.Qty ,
-				'$To_Area',
-				'$From_Area',
-				'CANCEL',
-				now(),
-				$cBy,
-				UUID_TO_BIN('$To_Loc_ID', TRUE),
-				UUID_TO_BIN('$From_Loc_ID', TRUE),
-				now(),
-				$cBy
-			FROM
-				tbl_shipping_header tsh
-			LEFT JOIN 
-				tbl_inventory ti ON tsh.Shipping_Header_ID = ti.Shipping_Header_ID 
-			WHERE
-				tsh.GTN_Number = '$GTN_Number' AND ti.Package_Number = '$Package_Number';";
-			sqlError($mysqli, __LINE__, $sql, 1);
-			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-			}
-
-
-			$sql = "UPDATE tbl_inventory 
-			SET 
-				Shipping_Header_ID = NULL,
-				Ship_Number = NULL,
-				Ship_Status = 'N',
-				Area = '$To_Area',
-				Location_ID = UUID_TO_BIN('$From_Loc_ID', TRUE),
-				Last_Updated_DateTime = NOW(),
-				Updated_By_ID = $cBy
-			WHERE
-				BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID';";
-			sqlError($mysqli, __LINE__, $sql, 1);
-			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
-			}
-
-			$sql = "WITH a AS (
-				SELECT 
-					GRN_Number,
-					Creation_DateTime,
-					MONTH(Creation_DateTime) AS Creation_Month,
-					period_Date
-				FROM 
-					tbl_shipping_header tsh
-					CROSS JOIN 
-						tbl_period tpr
-				WHERE 
-					YEAR(period_Date) = YEAR(curdate())
-				ORDER BY 
-					GRN_Number, period_Date)
-				SELECT a.*
-				FROM a 
-				WHERE Creation_Month = MONTH(curdate()) 
-				AND GRN_Number = '$GRN_Number'
-				GROUP BY GRN_Number;";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
-			}
-
-			//exit('ยกเลิกสำเร็จ');
-
-			//exit('ยกเลิกสำเร็จ');
-
-			$mysqli->commit();
-		} catch (Exception $e) {
-			$mysqli->rollback();
-			closeDBT($mysqli, 2, $e->getMessage());
-		}
-
-		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
-	} else if ($type == 32) {
-
 		$GTN_Number  = $_POST['obj'];
 
 		$mysqli->autocommit(FALSE);
@@ -312,120 +346,254 @@ if ($type <= 10) //data
 				$Package_Number = $row['Package_Number'];
 			}
 
-			$sql = "UPDATE tbl_shipping_header sh,
-				tbl_shipping_pre sp 
+			$sql = "UPDATE tbl_shipping_header tsh,
+				tbl_shipping_pre tsp 
 			SET 
 				Status_Shipping = 'CANCEL',
 				status = 'CANCEL',
 				Last_Updated_DateTime = NOW(),
 				Updated_By_ID = $cBy
 			WHERE
-				BIN_TO_UUID(sp.Shipping_Header_ID, TRUE) = BIN_TO_UUID(sh.Shipping_Header_ID, TRUE)
+				BIN_TO_UUID(tsp.Shipping_Header_ID, TRUE) = BIN_TO_UUID(tsh.Shipping_Header_ID, TRUE)
 					AND GTN_Number = '$GTN_Number';";
 			sqlError($mysqli, __LINE__, $sql, 1);
 			if ($mysqli->affected_rows == 0) {
 				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
 			}
 
+
 			$sql = "SELECT 
-				tiv.Area,
-				BIN_TO_UUID(tiv.Location_ID, TRUE) AS Location_ID,
-				Location_Code
-			FROM
-				tbl_inventory tiv
-					INNER JOIN
-				tbl_shipping_header tsh ON tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
-					INNER JOIN
-				tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
-				WHERE tsh.GTN_Number = '$GTN_Number'
-			ORDER BY tiv.Creation_DateTime DESC
-			LIMIT 1;";
-			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
-			if ($re1->num_rows == 0) {
-				throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
-			}
-			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
-				$Area = $row['Area'];
-				$Location_ID = $row['Location_ID'];
-			}
-
-			//exit($Package_Number);
-
-			$sql = "INSERT INTO
-				tbl_transaction(
-				Shipping_Header_ID,
-				Part_ID,
 				Package_Number,
-				Serial_Number,
 				Qty,
-				From_Area,
-				To_Area,
-				Trans_Type,
-				Creation_DateTime,
-				Created_By_ID,
-				From_Loc_ID,
-				To_Loc_ID,
-				Last_Updated_DateTime,
-				Updated_By_ID)
-			SELECT
-				UUID_TO_BIN('$Shipping_Header_ID',TRUE),
-				ti.Part_ID ,
-				ti.Package_Number ,
-				ti.FG_Serial_Number ,
-				ti.Qty ,
-				'$Area',
-				'$Area',
-				'CANCEL',
-				now(),
-				$cBy,
-				UUID_TO_BIN('$Location_ID', TRUE),
-				UUID_TO_BIN('$Location_ID', TRUE),
-				now(),
-				$cBy
+				BIN_TO_UUID(Location_ID, TRUE) AS Location_ID,
+				Area
 			FROM
-				tbl_shipping_header tsh
-			LEFT JOIN 
-				tbl_inventory ti ON tsh.Shipping_Header_ID = ti.Shipping_Header_ID 
+				tbl_inventory
 			WHERE
-				tsh.GTN_Number = '$GTN_Number' AND ti.Package_Number = '$Package_Number';";
-			sqlError($mysqli, __LINE__, $sql, 1);
-			//exit($sql);
-			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถยกเลิกข้อมูลได้' . __LINE__);
-			}
+				BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID'
+					AND Area = 'ShipOut' ;";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 
+			if ($re1->num_rows > 0) {
+				//confirm แล้ว
+				$sql = "UPDATE tbl_weld_on_order 
+				SET 
+					GTN_No = '',
+					Ship_Qty = Ship_Qty - $Qty,
+					Ship_Status = 'PENDING'
+				WHERE
+					GTN_No = '$GTN_Number'
+                AND Part_No = '$Part_No';";
+				sqlError($mysqli, __LINE__, $sql, 1);
+				if ($mysqli->affected_rows == 0) {
+					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+				}
 
-			$sql = "UPDATE tbl_inventory 
-			SET 
-				Shipping_Header_ID = NULL,
-				Last_Updated_DateTime = NOW(),
-				Updated_By_ID = $cBy
-			WHERE
-				BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID';";
-			sqlError($mysqli, __LINE__, $sql, 1);
-			if ($mysqli->affected_rows == 0) {
-				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+				$sql = "SELECT 
+					To_Area,
+					BIN_TO_UUID(To_Loc_ID, TRUE) AS To_Loc_ID,
+					(SELECT Location_Code FROM tbl_location_master where To_Loc_ID = Location_ID )AS From_Loc
+				FROM
+					tbl_transaction tts
+						INNER JOIN
+					tbl_shipping_header tsh ON tts.Shipping_Header_ID = tsh.Shipping_Header_ID
+				WHERE
+					GTN_Number = '$GTN_Number'
+						ORDER BY tts.Creation_DateTime DESC LIMIT 1;";
+				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+				if ($re1->num_rows == 0) {
+					throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
+				}
+				while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+					$From_Loc = $row['From_Loc'];
+					$To_Area = $row['To_Area'];
+					$To_Loc_ID = $row['To_Loc_ID'];
+				}
+
+				$sql = "SELECT 
+					From_Area,
+					BIN_TO_UUID(From_Loc_ID, TRUE) AS From_Loc_ID,
+					(SELECT Location_Code FROM tbl_location_master where From_Loc_ID = Location_ID )AS To_Loc
+				FROM
+					tbl_transaction tts
+						INNER JOIN
+					tbl_shipping_header tsh ON tts.Shipping_Header_ID = tsh.Shipping_Header_ID
+				WHERE
+					GTN_Number = '$GTN_Number'
+						ORDER BY tts.Creation_DateTime DESC LIMIT 1;";
+				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+				if ($re1->num_rows == 0) {
+					throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
+				}
+				while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+					$To_Loc = $row['To_Loc'];
+					$From_Area = $row['From_Area'];
+					$From_Loc_ID = $row['From_Loc_ID'];
+				}
+
+				//exit($To_Loc_ID . ' , ' . $From_Loc_ID);
+
+				$sql = "INSERT INTO
+					tbl_transaction(
+					Shipping_Header_ID,
+					Part_ID,
+					Package_Number,
+					Serial_Number,
+					Qty,
+					From_Area,
+					To_Area,
+					Trans_Type,
+					Creation_DateTime,
+					Created_By_ID,
+					From_Loc_ID,
+					To_Loc_ID,
+					Last_Updated_DateTime,
+					Updated_By_ID)
+				SELECT
+					UUID_TO_BIN('$Shipping_Header_ID',TRUE),
+					tiv.Part_ID ,
+					tiv.Package_Number ,
+					tiv.FG_Serial_Number ,
+					tiv.Qty ,
+					'$To_Area',
+					'$From_Area',
+					'CANCEL',
+					now(),
+					$cBy,
+					UUID_TO_BIN('$To_Loc_ID', TRUE),
+					UUID_TO_BIN('$From_Loc_ID', TRUE),
+					now(),
+					$cBy
+				FROM
+					tbl_shipping_header tsh
+				LEFT JOIN 
+					tbl_inventory tiv ON tsh.Shipping_Header_ID = tiv.Shipping_Header_ID 
+				WHERE
+					tsh.GTN_Number = '$GTN_Number' AND tiv.Package_Number = '$Package_Number';";
+				sqlError($mysqli, __LINE__, $sql, 1);
+				if ($mysqli->affected_rows == 0) {
+					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+				}
+
+				$sql = "UPDATE tbl_inventory 
+				SET 
+					Shipping_Header_ID = NULL,
+					Ship_Number = NULL,
+					Ship_Status = 'N',
+					Area = '$From_Area',
+					Location_ID = UUID_TO_BIN('$From_Loc_ID', TRUE),
+					Last_Updated_DateTime = NOW(),
+					Updated_By_ID = $cBy
+				WHERE
+					BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID';";
+				sqlError($mysqli, __LINE__, $sql, 1);
+				if ($mysqli->affected_rows == 0) {
+					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+				}
+			} else {
+				//ยังไม่ confirm
+				$sql = "SELECT 
+					tiv.Area,
+					BIN_TO_UUID(tiv.Location_ID, TRUE) AS Location_ID,
+					Location_Code
+				FROM
+					tbl_inventory tiv
+						INNER JOIN
+					tbl_shipping_header tsh ON tiv.Shipping_Header_ID = tsh.Shipping_Header_ID
+						INNER JOIN
+					tbl_location_master tlm ON tiv.Location_ID = tlm.Location_ID
+					WHERE tsh.GTN_Number = '$GTN_Number'
+				ORDER BY tiv.Creation_DateTime DESC
+				LIMIT 1;";
+				$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+				if ($re1->num_rows == 0) {
+					throw new Exception('ไม่พบข้อมูล Location' . __LINE__);
+				}
+				while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+					$Area = $row['Area'];
+					$Location_ID = $row['Location_ID'];
+				}
+				//exit($Area . ' , ' . $Location_ID);
+				//exit($Package_Number);
+
+				$sql = "INSERT INTO
+					tbl_transaction(
+					Shipping_Header_ID,
+					Part_ID,
+					Package_Number,
+					Serial_Number,
+					Qty,
+					From_Area,
+					To_Area,
+					Trans_Type,
+					Creation_DateTime,
+					Created_By_ID,
+					From_Loc_ID,
+					To_Loc_ID,
+					Last_Updated_DateTime,
+					Updated_By_ID)
+				SELECT
+					UUID_TO_BIN('$Shipping_Header_ID',TRUE),
+					tiv.Part_ID ,
+					tiv.Package_Number ,
+					tiv.FG_Serial_Number ,
+					tiv.Qty ,
+					'$Area',
+					'$Area',
+					'CANCEL',
+					now(),
+					$cBy,
+					UUID_TO_BIN('$Location_ID', TRUE),
+					UUID_TO_BIN('$Location_ID', TRUE),
+					now(),
+					$cBy
+				FROM
+					tbl_shipping_header tsh
+				LEFT JOIN 
+					tbl_inventory tiv ON tsh.Shipping_Header_ID = tiv.Shipping_Header_ID 
+				WHERE
+					tsh.GTN_Number = '$GTN_Number' AND tiv.Package_Number = '$Package_Number';";
+				sqlError($mysqli, __LINE__, $sql, 1);
+				if ($mysqli->affected_rows == 0) {
+					throw new Exception('ไม่สามารถยกเลิกข้อมูลได้' . __LINE__);
+				}
+
+				$sql = "UPDATE tbl_inventory 
+				SET 
+					Shipping_Header_ID = NULL,
+					Ship_Number = NULL,
+					Ship_Status = 'N',
+					Area = '$Area',
+					Location_ID = UUID_TO_BIN('$Location_ID', TRUE),
+					Last_Updated_DateTime = NOW(),
+					Updated_By_ID = $cBy
+				WHERE
+					BIN_TO_UUID(Shipping_Header_ID, TRUE) = '$Shipping_Header_ID';";
+				sqlError($mysqli, __LINE__, $sql, 1);
+				if ($mysqli->affected_rows == 0) {
+					throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+				}
 			}
 
 			$sql = "WITH a AS (
-				SELECT 
-					GRN_Number,
-					Creation_DateTime,
-					MONTH(Creation_DateTime) AS Creation_Month,
-					period_Date
-				FROM 
-					tbl_shipping_header tsh
-					CROSS JOIN 
-						tbl_period tpr
-				WHERE 
-					YEAR(period_Date) = YEAR(curdate())
-				ORDER BY 
-					GRN_Number, period_Date)
-				SELECT a.*
-				FROM a 
-				WHERE Creation_Month = MONTH(curdate()) 
-				AND GRN_Number = '$GRN_Number'
-				GROUP BY GRN_Number;";
+			SELECT 
+				GTN_Number,
+				Creation_DateTime,
+				MONTH(Creation_DateTime) AS Creation_Month,
+				period_Date
+			FROM 
+				tbl_shipping_header tsh
+				CROSS JOIN 
+					tbl_period tpr
+			WHERE 
+				YEAR(period_Date) = YEAR(curdate())
+			ORDER BY 
+				GTN_Number, period_Date)
+			SELECT a.*
+			FROM a 
+			WHERE Creation_Month = MONTH(curdate()) 
+			AND GTN_Number = '$GTN_Number'
+			GROUP BY GTN_Number;";
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 			if ($re1->num_rows == 0) {
 				throw new Exception('ไม่สามารถยกเลิกได้' . __LINE__);
@@ -440,6 +608,7 @@ if ($type <= 10) //data
 		}
 
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
+		//
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 40 && $type <= 50) //save
 {

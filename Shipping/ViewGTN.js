@@ -186,7 +186,7 @@ var header_ViewGTN = function () {
                                             if (item.Is_Header == 'YES' && item.Confirm_Shipping_DateTime != null && item.Confirm_Delivery_DateTime != null && item.Status_Shipping == 'DELIVERY') {
                                                 item.$css = { "background": "#b2d9ff", "font-weight": "bold" };
                                             }
-                                            if (item.Is_Header == 'YES' && item.Confirm_Shipping_DateTime == null && item.Status_Shipping == 'PENDING') {
+                                            if (item.Is_Header == 'YES' && item.Status_Shipping == 'PENDING') {
                                                 item.$css = { "background": "#ffffb2", "font-weight": "bold" };
                                             }
                                         }
@@ -195,7 +195,7 @@ var header_ViewGTN = function () {
                                         {
                                             id: "data22", header: "&nbsp;", width: 40,
                                             template: function (row) {
-                                                if (row.Is_Header == "YES") {
+                                                if (row.Is_Header == "YES" && row.Status_Shipping != 'CANCEL') {
                                                     return "<span style='cursor:pointer' class='webix_icon fa-file-pdf-o'></span>";
                                                 }
                                                 else {
@@ -203,33 +203,30 @@ var header_ViewGTN = function () {
                                                 }
                                             }
                                         },
-                                        // {
-                                        //     id: $n("icon_edit"), header: "&nbsp;", width: 40, template: function (row) {
-                                        //         if (row.Is_Header == "YES") {
-                                        //             return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
-                                        //         }
-                                        //         else {
-                                        //             return '';
-                                        //         }
-                                        //     }
+                                        {
+                                            id: $n("icon_edit"), header: "&nbsp;", width: 40, template: function (row) {
+                                                if (row.Is_Header == "YES" && row.Status_Shipping != 'DELIVERY' && row.Status_Shipping != 'CANCEL') {
+                                                    return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
+                                                }
+                                                else {
+                                                    return '';
+                                                }
+                                            }
 
-                                        // },
+                                        },
                                         {
                                             id: $n("icon_cancel"), header: "&nbsp;", width: 40, template: function (row) {
-                                                if (row.Is_Header == "YES" && row.Status_Shipping == 'COMPLETE') {
+                                                if (row.Is_Header == "YES" && row.Status_Shipping != 'CANCEL' && row.Status_Shipping != 'DELIVERY') {
                                                     return "<span style='cursor:pointer' class='webix_icon fa-ban'></span>";
                                                 }
-                                                else if (row.Is_Header == "YES" && row.Status_Shipping == 'PENDING'){
-                                                    return "<span style='cursor:pointer' class='webix_icon fa-trash'></span>";
-                                                }
-                                                else{
-                                                    return ''; 
+                                                else {
+                                                    return '';
                                                 }
                                             }
                                         },
                                         { id: "No", header: "", css: { "text-align": "right" }, editor: "", width: 40 },
                                         {
-                                            id: "GTN_Number", header: ["PS Number", { content: "textFilter" }], editor: "", width: 180,
+                                            id: "GTN_Number", header: ["GTN Number", { content: "textFilter" }], editor: "", width: 180,
                                             template: "{common.treetable()} #GTN_Number#"
                                         },
                                         { id: "Ship_Date", header: ["Ship Date", { content: "textFilter" }], width: 140 },
@@ -252,37 +249,28 @@ var header_ViewGTN = function () {
                                             var data = row.GTN_Number;
                                             window.open("print/doc/gtn.php?data=" + data, '_blank');
                                         },
-                                        // "fa-pencil": function (e, t) {
-                                        //     ele('win_edit').show();
-                                        //     var row = this.getItem(t);
-                                        //     var obj = row.PS_Number;
-                                        //     console.log(obj);
-                                        //     ajax(fd, obj, 21, function (json) {
-                                        //         setTable('dataT1', json.data);
-                                        //     }, null,
-                                        //         function (json) {
-                                        //         });
-                                        // },
+                                        "fa-pencil": function (e, t) {
+                                            // ele('win_edit').show();
+                                            var row = this.getItem(t);
+                                            var obj = row.GTN_Number;
+                                            // console.log(obj);
+                                            msBox('แก้ไข', function () {
+                                                ajax(fd, obj, 21, function (json) {
+                                                    loadData();
+                                                    //webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'แก้ไขสำเร็จ', callback: function () { } });
+
+                                                }, null,
+                                                    function (json) {
+                                                    });
+                                            }, row);
+
+                                        },
                                         "fa-ban": function (e, t) {
                                             var row = this.getItem(t), datatable = this;
                                             var obj = row.GTN_Number;
                                             console.log('obj : ', obj);
                                             msBox('ยกเลิก', function () {
                                                 ajax(fd, obj, 31, function (json) {
-                                                    loadData();
-                                                    webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ยกเลิกสำเร็จ', callback: function () { } });
-
-                                                }, null,
-                                                    function (json) {
-                                                    });
-                                            }, row);
-                                        },
-                                        "fa-trash": function (e, t) {
-                                            var row = this.getItem(t), datatable = this;
-                                            var obj = row.GTN_Number;
-                                            console.log('obj : ', obj);
-                                            msBox('ยกเลิก', function () {
-                                                ajax(fd, obj, 32, function (json) {
                                                     loadData();
                                                     webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ยกเลิกสำเร็จ', callback: function () { } });
 

@@ -220,7 +220,7 @@ var header_ConfirmShipping = function () {
                                     { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
                                     { id: "FG_Serial_Number", header: ["Serial Number", { content: "textFilter" }], width: 200 },
                                     { id: "Qty", header: ["Qty", { content: "textFilter" }], width: 100 },
-                                    { id: "Ship_Number", header: ["Ship_Number", { content: "textFilter" }], width: 100 },
+                                    //{ id: "Ship_Number", header: ["Ship_Number", { content: "textFilter" }], width: 100 },
                                     //{ id: "Status_Shipping", header: ["Status_Shipping", { content: "textFilter" }], width: 100 },
                                     { id: "Confirm_Shipping_DateTime", header: ["Confirm Shipping DateTime", { content: "textFilter" }], width: 200 },
                                 ],
