@@ -153,20 +153,17 @@ if ($type <= 10) //data
 		try {
 
 			$sql = "SELECT 
-				BIN_TO_UUID(rh.Receiving_Header_ID, TRUE) AS Receiving_Header_ID,
-				DN_Number,
+				BIN_TO_UUID(trh.Receiving_Header_ID, TRUE) AS Receiving_Header_ID,
 				Package_Number,
-				FG_Serial_Number,
-				Qty
+				Area
 			FROM
-				tbl_receiving_pre rp
+				tbl_receiving_pre trp
 					INNER JOIN
-				tbl_receiving_header rh ON rp.Receiving_Header_ID = rh.Receiving_Header_ID
+				tbl_receiving_header trh ON trp.Receiving_Header_ID = trh.Receiving_Header_ID
 			WHERE
 				GRN_Number = '$GRN_Number'
 					AND Status_Receiving = 'PENDING'
 					AND status = 'COMPLETE';";
-
 			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 
 			if ($re1->num_rows == 0) {
@@ -174,10 +171,11 @@ if ($type <= 10) //data
 			}
 			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
 				$Receiving_Header_ID = $row['Receiving_Header_ID'];
-				$DN_Number = $row['DN_Number'];
 				$Package_Number = $row['Package_Number'];
-				$FG_Serial_Number = $row['FG_Serial_Number'];
+				$Area = $row['Area'];
 			}
+
+			//exit($sql);
 
 			$sql = "UPDATE tbl_receiving_header 
 			SET 
@@ -207,6 +205,60 @@ if ($type <= 10) //data
 				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
 			}
 
+			//อัพเดท Area ใน tbl_receiving_pre
+			$sql = "UPDATE tbl_receiving_pre
+			SET 
+				Area = 'Received'
+			WHERE
+				BIN_TO_UUID(Receiving_Header_ID, TRUE) = '$Receiving_Header_ID'
+					AND Package_Number = '$Package_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
+
+			// $sql = "SELECT 
+			// 	BIN_TO_UUID(Location_ID, TRUE) AS Location_ID, Location_Code
+			// FROM
+			// 	tbl_location_master
+			// WHERE
+			// 	Location_Code = 'N/A';";
+			// $re1 = sqlError($mysqli, __LINE__, $sql, 1);
+
+			// if ($re1->num_rows == 0) {
+			// 	throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			// }
+			// while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+			// 	$Location_ID = $row['Location_ID'];
+			// }
+
+			$sql = "INSERT INTO tbl_inventory
+			(Receiving_Header_ID, Receiveing_Pre_ID, Part_ID, Package_Number, FG_Serial_Number, Qty, Area, Location_ID, Creation_DateTime, Created_By_ID)
+			SELECT
+				trh.Receiving_Header_ID,
+				trp.ID ,
+				trp.Part_ID ,
+				trp.Package_Number ,
+				trp.FG_Serial_Number ,
+				trp.Qty ,
+				'Received',
+				(SELECT Location_ID FROM tbl_location_master WHERE Location_Code = 'N/A'),
+				NOW(),
+				$cBy
+			FROM
+				tbl_receiving_header trh
+			LEFT JOIN tbl_receiving_pre trp ON
+				trh.Receiving_Header_ID = trp.Receiving_Header_ID 
+				WHERE trh.GRN_Number = '$GRN_Number'
+				ON DUPLICATE KEY UPDATE 
+				Last_Updated_DateTime = NOW(),
+				Updated_By_ID = '$cBy';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
+
+			//exit('s');
 
 			$sp_trans = "CALL SP_Transaction_Save('IN','$GRN_Number','','','','$cBy','','');";
 

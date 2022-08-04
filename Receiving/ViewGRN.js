@@ -242,7 +242,7 @@ var header_ViewGRN = function () {
                                         {
                                             id: "data22", header: "&nbsp;", width: 40,
                                             template: function (row) {
-                                                if (row.Is_Header == "YES") {
+                                                if (row.Is_Header == "YES" && row.Status_Receiving != 'CANCEL') {
                                                     return "<span style='cursor:pointer' class='webix_icon fa-file-pdf-o'></span>";
                                                 }
                                                 else {
@@ -250,27 +250,26 @@ var header_ViewGRN = function () {
                                                 }
                                             }
                                         },
-                                        // {
-                                        //     id: $n("icon_edit"), header: "&nbsp;", width: 40, template: function (row) {
-                                        //         if (row.Is_Header == "YES" && row.Status_Receiving == 'PENDING') {
-                                        //             return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
-                                        //         }
-                                        //         else {
-                                        //             return '';
-                                        //         }
-                                        //     }
+                                        {
+                                            id: $n("icon_edit"), header: "&nbsp;", width: 40, template: function (row) {
+                                                if (row.Is_Header == "YES" && row.Status_Receiving != 'CANCEL' 
+                                                && row.Pick_status != 'Y' && row.Picking_Header_ID == null) {
+                                                    return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
+                                                }
+                                                else {
+                                                    return '';
+                                                }
+                                            }
 
-                                        // },
+                                        },
                                         {
                                             id: $n("icon_cancel"), header: "&nbsp;", width: 40, template: function (row) {
-                                                if (row.Is_Header == "YES" && row.Status_Receiving == 'COMPLETE' && row.Pick_status != 'Y') {
+                                                if (row.Is_Header == "YES" && (row.Status_Receiving == 'COMPLETE' || row.Status_Receiving == 'PENDING') 
+                                                && row.Pick_status != 'Y' && row.Picking_Header_ID == null) {
                                                     return "<span style='cursor:pointer' class='webix_icon fa-ban'></span>";
                                                 }
-                                                else if (row.Is_Header == "YES" && row.Status_Receiving == 'PENDING'){
-                                                    return "<span style='cursor:pointer' class='webix_icon fa-trash'></span>";
-                                                }
-                                                else{
-                                                    return ''; 
+                                                else {
+                                                    return '';
                                                 }
                                             }
                                         },
@@ -299,37 +298,28 @@ var header_ViewGRN = function () {
                                             var data = row.GRN_Number;
                                             window.open("print/doc/grn.php?data=" + data, '_blank');
                                         },
-                                        // "fa-pencil": function (e, t) {
-                                        //     ele('win_edit').show();
-                                        //     var row = this.getItem(t);
-                                        //     var obj = row.GRN_Number;
-                                        //     console.log(obj);
-                                        //     ajax(fd, obj, 21, function (json) {
-                                        //         setTable('dataT1', json.data);
-                                        //     }, null,
-                                        //         function (json) {
-                                        //         });
-                                        // },
+                                        "fa-pencil": function (e, t) {
+                                            // ele('win_edit').show();
+                                            var row = this.getItem(t);
+                                            var obj = row.GRN_Number;
+                                            // console.log(obj);
+                                            msBox('แก้ไข', function () {
+                                                ajax(fd, obj, 21, function (json) {
+                                                    loadData();
+                                                    //webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'แก้ไขสำเร็จ', callback: function () { } });
+
+                                                }, null,
+                                                    function (json) {
+                                                    });
+                                            }, row);
+
+                                        },
                                         "fa-ban": function (e, t) {
                                             var row = this.getItem(t), datatable = this;
                                             var obj = row.GRN_Number;
                                             console.log('obj : ', obj);
                                             msBox('บันทึก', function () {
                                                 ajax(fd, obj, 31, function (json) {
-                                                    loadData();
-                                                    webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ยกเลิกสำเร็จ', callback: function () { } });
-
-                                                }, null,
-                                                    function (json) {
-                                                    });
-                                            }, row);
-                                        },
-                                        "fa-trash": function (e, t) {
-                                            var row = this.getItem(t), datatable = this;
-                                            var obj = row.GRN_Number;
-                                            console.log('obj : ', obj);
-                                            msBox('บันทึก', function () {
-                                                ajax(fd, obj, 32, function (json) {
                                                     loadData();
                                                     webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ยกเลิกสำเร็จ', callback: function () { } });
 

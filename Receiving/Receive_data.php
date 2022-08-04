@@ -237,7 +237,7 @@ if ($type <= 10) //data
 				'$Package_Number',
 				'$FG_Serial_Number',
 				1,
-				'Received',
+				NULL,
 				now(),
 				$cBy);";
 
@@ -264,6 +264,93 @@ if ($type <= 10) //data
 {
 	if ($_SESSION['xxxRole']->{'Receive'}[3] == 0) closeDBT($mysqli, 9, 'คุณไม่ได้รับอุญาติให้ทำกิจกรรมนี้');
 	if ($type == 31) {
+
+
+		$obj  = $_POST['obj'];
+		$explode = explode("/", $obj);
+		$GRN_Number  = $explode[0];
+		$FG_Serial_Number  = $explode[1];
+		//exit($GRN_Number .' , '.$FG_Serial_Number);
+
+		$mysqli->autocommit(FALSE);
+		try {
+
+			$sql = "SELECT 
+				BIN_TO_UUID(trh.Receiving_Header_ID, TRUE) AS Receiving_Header_ID
+			FROM
+				tbl_receiving_header trh
+			WHERE
+				GRN_Number = '$GRN_Number';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Receiving_Header_ID = $row['Receiving_Header_ID'];
+			}
+
+			$sql = "SELECT
+				Qty
+			FROM
+				tbl_receiving_pre trp
+			WHERE
+				FG_Serial_Number = '$FG_Serial_Number';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Qty = $row['Qty'];
+			}
+
+			//
+			$sql = "SELECT 
+				tdo.Package_Number, tdo.FG_Serial_Number, Receive_Status
+			FROM
+				tbl_dn_order tdo
+					INNER JOIN
+				tbl_receiving_pre trp ON tdo.FG_Serial_Number = trp.FG_Serial_Number
+			WHERE
+				Receive_Status = 'Y';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูลได้' . __LINE__);
+			}//
+
+
+			$sql = "DELETE FROM tbl_receiving_pre trp 
+			WHERE
+				BIN_TO_UUID(trp.Receiving_Header_ID, TRUE) = '$Receiving_Header_ID'
+					AND FG_Serial_Number = '$FG_Serial_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถลบได้' . __LINE__);
+			}
+
+			$sql = "SELECT 
+				SUM(Qty) AS Sum_Qty
+			FROM
+				tbl_receiving_pre trp
+			WHERE
+				BIN_TO_UUID(Receiving_Header_ID, TRUE) = '$Receiving_Header_ID'
+					AND status = 'PENDING';";
+			$re1 = sqlError($mysqli, __LINE__, $sql, 1);
+			if ($re1->num_rows == 0) {
+				throw new Exception('ไม่พบข้อมูล' . __LINE__);
+			}
+			while ($row = $re1->fetch_array(MYSQLI_ASSOC)) {
+				$Sum_Qty = $row['Sum_Qty'];
+			}
+
+			//exit('ลบสำเร็จ');
+
+			$mysqli->commit();
+		} catch (Exception $e) {
+			$mysqli->rollback();
+			closeDBT($mysqli, 2, $e->getMessage());
+		}
+
+		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else closeDBT($mysqli, 2, 'TYPE ERROR');
 } else if ($type > 40 && $type <= 50) //save
 {

@@ -280,6 +280,17 @@ if ($type <= 10) //data
 				$Location_ID = $row['Location_ID'];
 			}
 
+			//อัพเดท Area ใน tbl_receiving_pre
+			$sql = "UPDATE tbl_receiving_pre
+			SET 
+				Area = 'Storage'
+			WHERE
+				BIN_TO_UUID(Receiving_Header_ID, TRUE) = '$Receiving_Header_ID'
+					AND Package_Number = '$Package_Number';";
+			sqlError($mysqli, __LINE__, $sql, 1);
+			if ($mysqli->affected_rows == 0) {
+				throw new Exception('ไม่สามารถบันทึกข้อมูลได้' . __LINE__);
+			}
 
 			//อัพเดท Area ใน tbl_inventory
 			$sql = "UPDATE tbl_inventory tiv 

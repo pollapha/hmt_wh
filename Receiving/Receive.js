@@ -240,6 +240,11 @@ var header_Receive = function () {
                                     }
                                 },
                                 columns: [
+                                    {
+                                        id: $n("icon_cancel"), header: "&nbsp;", width: 40, template: function (row) {
+                                            return "<span style='cursor:pointer' class='webix_icon fa-trash'></span>";
+                                        }
+                                    },
                                     { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
                                     { id: "DN_Number", header: ["DN Number", { content: "textFilter" }], width: 140 },
                                     { id: "Package_Number", header: ["Package Number", { content: "textFilter" }], width: 150 },
@@ -250,6 +255,20 @@ var header_Receive = function () {
                                 ],
                                 onClick:
                                 {
+                                    "fa-trash": function (e, t) {
+                                        var row = this.getItem(t), datatable = this;
+                                        var obj = row.GRN_Number.concat("/", row.FG_Serial_Number);
+                                        console.log('obj : ', obj);
+                                        msBox('ลบ', function () {
+                                            ajax(fd, obj, 31, function (json) {
+                                                loadData();
+                                                //webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ลบสำเร็จ', callback: function () { } });
+
+                                            }, null,
+                                                function (json) {
+                                                });
+                                        }, row);
+                                    },
                                 },
                                 on: {
                                     // "onEditorChange": function (id, value) {
