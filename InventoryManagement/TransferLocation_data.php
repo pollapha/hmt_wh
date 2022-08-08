@@ -49,12 +49,10 @@ if ($type <= 10) //data
 		left join tbl_location_master tlm on tiv.Location_ID = tlm.Location_ID
 		where trh.GRN_Number = '$GRN_Number' and tiv.Package_Number = '$Package_Number' 
 		and tiv.Area = 'Storage';";
-
 		$re1 = sqlError($mysqli, __LINE__, $sql, 1);
 		if ($re1->num_rows == 0) {
 			throw new Exception('ไม่พบข้อมูล' . __LINE__);
 		}
-
 		closeDBT($mysqli, 1, jsonRow($re1, true, 0));
 	} else if ($type == 2) {
 		$dataParams = array(
