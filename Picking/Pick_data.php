@@ -552,7 +552,6 @@ if ($type <= 10) //data
 				$Area = $row['To_Area'];
 				$Loc_ID = $row['To_Loc_ID'];
 			}
-			//exit($Area.' , '.$Loc_ID);
 
 			$sql = "UPDATE tbl_inventory 
 			SET 
