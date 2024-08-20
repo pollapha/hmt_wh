@@ -4,202 +4,209 @@ include '../exfpdf.php';
 include '../easyTable.php';
 include 'PDF_Code128.php';
 include('../../php/connection.php');
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
 
 $doc = $mysqli->real_escape_string(trim(strtoupper($_REQUEST['data'])));
 $dataset = array();
 $q1  = "SELECT
-		GRN_Number,
-		Receive_DateTime,
-		date_format(Receive_DateTime, '%Y-%m-%d') AS Received_Date,
-		trh.DN_Number,
-		Total_Qty,
-		Remark,
-		Status_Receiving,
-		trh.Creation_DateTime,
-		trh.Created_By_ID,
-		tcm.Customer_Name  as Supplier
-		FROM
-		tbl_receiving_header trh
-		LEFT JOIN tbl_receiving_pre trp ON
-		trh.Receiving_Header_ID = trp.Receiving_Header_ID
-		INNER JOIN tbl_part_master tpm ON
-		trp.Part_ID = tpm.Part_ID
-		INNER JOIN tbl_customer_master tcm ON
-		tcm.Customer_ID = tpm.Customer_ID WHERE trh.GRN_Number= '$doc' GROUP BY trh.GRN_Number ;";
-
-$q1  .= "SELECT
-GRN_Number,
-Receive_DateTime,
-date_format(Receive_DateTime, '%Y-%m-%d') AS Received_Date,
-trh.DN_Number,
-Total_Qty,
-trp.FG_Serial_Number ,
-Remark,
-Status_Receiving,
-trh.Creation_DateTime,
-trh.Created_By_ID,
-tcm.Customer_Name ,
-trp.Part_No as Part_Number,
-tpm.Part_Name ,
-trp.Qty,
-tpm2.Package_Type  
+document_no, date_format(document_date, '%d-%b-%y') document_date, declaration_no, container_no, bl_no, invoice_no,
+date_format(t1.created_at, '%d-%m-%Y / %h:%s:%i') created_at, t2.user_fName created_by
 FROM
-tbl_receiving_header trh
-LEFT JOIN tbl_receiving_pre trp ON
-trh.Receiving_Header_ID = trp.Receiving_Header_ID
-INNER JOIN tbl_part_master tpm ON
-trp.Part_ID = tpm.Part_ID
-INNER JOIN tbl_customer_master tcm ON
-tcm.Customer_ID = tpm.Customer_ID
-INNER JOIN tbl_package_master tpm2 ON
-tpm.Package_ID = tpm2.Package_ID WHERE trh.GRN_Number= '$doc';";
+tbl_transaction t1
+	left join
+tbl_user t2 ON t1.created_user_id = t2.user_id
+WHERE document_no = '$doc'
+	AND t1.transaction_type = 'In';";
+	
+$q1  .= "SELECT 
+	part_no, part_name, pallet_no, case_tag_no, 
+	qty, gross_kg, net_per_pallet, certificate_no, coil_lot_no,
+	t2.remark
+FROM
+	tbl_transaction t1
+		inner join 
+	tbl_transaction_line t2 ON t1.transaction_id = t2.transaction_id
+		inner join
+	tbl_part_master t3 ON t2.part_id = t3.part_id
+WHERE
+	document_no = '$doc'
+		AND t1.transaction_type = 'In'
+		AND t2.status = 'Complete'
+		;";
 if (!$mysqli->multi_query($q1)) {
-  echo "Multi query failed: (" . $mysqli->errno . ") " . $mysqli->error;
+	echo "Multi query failed: (" . $mysqli->errno . ") " . $mysqli->error;
 }
 do {
-  if ($res = $mysqli->store_result()) {
-      array_push($dataset, $res->fetch_all(MYSQLI_ASSOC));
-      $res->free();
-  }
+	if ($res = $mysqli->store_result()) {
+		array_push($dataset, $res->fetch_all(MYSQLI_ASSOC));
+		$res->free();
+	}
 } while ($mysqli->more_results() && $mysqli->next_result());
 $headerData = $dataset[0];
 $detailData = $dataset[1];
 
+
 class PDF extends PDF_Code128
 {
-	function __construct($orientation='P', $unit='mm', $format='A4')
+	function __construct($orientation = 'P', $unit = 'mm', $format = 'A4')
 	{
-		parent::__construct($orientation,$unit,$format);
-      	$this->AliasNbPages();
+		parent::__construct($orientation, $unit, $format);
+		$this->AliasNbPages();
 	}
 	public function setHeaderData($v)
-  	{
-    	$this->headerData = $v;
-  	}
-  	public function setInstance($v)
-  	{
-   		$this->instance = $v;
-  	}
-  	function Header()
-  	{
-  		$v = $this->headerData;
-	    $header = new easyTable($this->instance, '%{20, 50, 30,}', 'border:0;font-family:THSarabun;font-size:12; font-style:B;');
-		$header->easyCell('', 'img:images/abt-logo.gif, w35;align:L', '');
-      $header->easyCell('ALBATROSS LOGISTICS CO., LTD.
-	  336/7 MOO 7 BOWIN, SRIRACHA CHONBURI 20230
-	  Phone +66 38 058 021, +66 38 058 081-2
-	  Fax : +66 38 058 007
-	  ', 'valign:M;align:L');
-      $header->easyCell($v[0]['GRN_Number'], 'valign:B;align:C');
-      $header->printRow();
-      $header->endTable(2);
-      	
+	{
+		$this->headerData = $v;
+	}
+	public function setInstance($v)
+	{
+		$this->instance = $v;
+	}
+	function Header()
+	{
+		$v = $this->headerData;
+		$header = new easyTable($this->instance, '%{85,15}', 'border:0;font-family:Trirong;');
+		$header->easyCell('TTV SUPPLYCHAIN CO., LTD. (TTV)', 'valign:M;align:L;font-size:10; font-style:B;border:0');
+		$header->easyCell('', 'img:images/TTVNEW.jpg, w30;align:C;rowspan:2;bgcolor:#ffffff;border:0', '');
+		$header->printRow();
+		$header->easyCell('336/11 Moo 7 BoWin, Sriracha, Chonburi 20230
+		Tel: 033 -135 020', 'valign:M;align:L;font-size:8; font-style:B;border:0');
+		$header->printRow();
 
-      	$header=new easyTable($this->instance, '%{100}','border:0;font-family:THSarabun;font-size:20; font-style:B;');
-      	$header->easyCell(utf8Th('GOODS RECEIPT NOTE'), 'valign:M;align:C;border:TB');
-      	$header->printRow();
-      	$header->endTable(1);
+		$this->instance->Code128(95, 13, $v[0]['document_no'], 60, 8);
 
-        $header=new easyTable($this->instance, '%{20,20,10,20,15,15}','border:0;font-family:THSarabun;font-size:13;');
-        $header->easyCell("Receipt Date Time :", 'valign:T;align:L;font-style:B;');
-        $header->easyCell(utf8Th($v[0]['Received_Date']), 'valign:T;align:L;');
-        $header->easyCell("GRN No :", 'valign:T;align:L;font-style:B;');
-        $header->easyCell(utf8Th($v[0]['GRN_Number']), 'valign:T;align:L;');
-        $header->easyCell("Supplier Name : ", 'valign:T;align:L;font-style:B;');
-        $header->easyCell($v[0]['Supplier'], 'valign:T;align:L;');
-        $header->printRow();
-		$header->easyCell("DN Number :", 'valign:T;align:L;font-style:B;');
-        $header->easyCell(utf8Th($v[0]['DN_Number']), 'valign:T;align:L;');
-        $header->printRow();
-        $header->endTable(2);
+		$header->endTable(2);
 
-	    $headdetail =new easyTable($this->instance, '{10,35,45,50,20,20,55}',
-	    'width:300;border:1;font-family:THSarabun;font-size:12; font-style:B;bgcolor:#C8C8C8;');
-		$headdetail->easyCell(utf8Th('No.'), 'align:C');
-        $headdetail->easyCell(utf8Th('Part Number'), 'align:C');
-        $headdetail->easyCell(utf8Th('Part Name'), 'align:C');
-        $headdetail->easyCell(utf8Th('Serial Number'), 'align:C');
-        $headdetail->easyCell(utf8Th('Qty'), 'align:C');
-        $headdetail->easyCell(utf8Th('Package Type'), 'align:C');
-        $headdetail->easyCell(utf8Th('Remark'), 'align:C');
-		$headdetail->printRow(); 
+		$header = new easyTable($this->instance, '%{100}', 'border:1;font-family:Trirong;font-size:12; font-style:B;');
+		$header->easyCell(utf8Th('Goods Receipt Note (GRN)'), 'valign:M;align:C');
+		$header->printRow();
+
+		$header->endTable(3);
+
+		$header = new easyTable($this->instance, '%{25,25,25,25}', 'border:0;font-family:Trirong;font-size:8; line-height:1.3');
+		$header->easyCell("Declaration No. :", 'valign:T;align:R;border:0;');
+		$header->easyCell(utf8Th($v[0]['declaration_no']), 'valign:T;align:L;border:0;');
+		$header->easyCell("Document No. :", 'valign:T;align:R;border:0;');
+		$header->easyCell(utf8Th($v[0]['document_no']), 'valign:T;align:L;border:0;');
+		$header->printRow();
+		$header->easyCell("Container No. :", 'valign:T;align:R;border:0;');
+		$header->easyCell(utf8Th($v[0]['container_no']), 'valign:T;align:L;border:0;');
+		$header->easyCell("Document Date :", 'valign:T;align:R;border:0;');
+		$header->easyCell(utf8Th($v[0]['document_date']), 'valign:T;align:L;border:0;');
+		$header->printRow();
+		$header->easyCell("BL No. :", 'valign:T;align:R;border:0;');
+		$header->easyCell(utf8Th($v[0]['bl_no']), 'valign:T;align:L;border:0;');
+		$header->easyCell("Creator :", 'valign:T;align:R;border:0;');
+		$header->easyCell(utf8Th($v[0]['created_by']), 'valign:T;align:L;border:0;');
+		$header->printRow();
+		$header->easyCell("Invoice No. :", 'valign:T;align:R;border:0;');
+		$header->easyCell(utf8Th($v[0]['invoice_no']), 'valign:T;align:L;border:0;');
+		$header->easyCell("Created At :", 'valign:T;align:R;border:0;');
+		$header->easyCell(utf8Th($v[0]['created_at']), 'valign:T;align:L;border:0;');
+		$header->printRow();
+
+		$header->endTable(3);
+
+		$headdetail = new easyTable(
+			$this->instance,
+			'%{5,20,30,10,15,10,10}',
+			'border:1;font-family:Trirong;font-size:7; font-style:B; valign:M;'
+		);
+		$headdetail->easyCell(utf8Th('Item'), 'align:C');
+		$headdetail->easyCell(utf8Th('Part No.'), 'align:C');
+		$headdetail->easyCell(utf8Th('Part Description'), 'align:C');
+		$headdetail->easyCell(utf8Th('Pallet No.'), 'align:C');
+		$headdetail->easyCell(utf8Th('Certificate No.'), 'align:C');
+		$headdetail->easyCell(utf8Th('Net Weight
+		(Kg.)'), 'align:C');
+		$headdetail->easyCell(utf8Th('Qty
+		(Pcs.)'), 'align:C');
+		$headdetail->printRow();
 		$headdetail->endTable(0);
-
-		$this->instance->Code128(145,10,$v[0]['GRN_Number'],55,7);
-  	}
-  	function Footer()
-  	{
-  		$this->SetXY(-20,0);
-	    $this->SetFont('THSarabun','I',8);
-	    $this->Cell(0,10,'Page '.$this->PageNo().'/{nb}',0,0,'C');
-  	}
+	}
+	function Footer()
+	{
+		$this->SetXY(-30, 2);
+		$this->SetFont('Trirong', '', 8);
+		$this->Cell(0, 10, 'Page ' . $this->PageNo() . '/{nb}', 0, 0, 'C');
+	}
 }
 
-$pdf=new PDF('P');
+$pdf = new PDF('P');
 
-$pdf->AddFont('THSarabun','','THSarabun.php');
-$pdf->AddFont('THSarabun','I','THSarabun Italic.php');
-$pdf->AddFont('THSarabun','B','THSarabun Bold.php');
-$pdf->AddFont('THSarabun','BI','THSarabun Bold Italic.php');
+$pdf->AddFont('Trirong', '', 'Trirong-Regular.php');
+$pdf->AddFont('Trirong', 'I', 'Trirong-Italic.php');
+$pdf->AddFont('Trirong', 'B', 'Trirong-Bold.php');
+$pdf->AddFont('Trirong', 'BI', 'Trirong-BoldItalic.php');
 $pdf->setInstance($pdf);
 $pdf->setHeaderData($headerData);
 $pdf->AddPage();
-$docno = $headerData[0]['GRN_Number'];
+$docno = $headerData[0]['document_no'];
 $pdf->SetTitle($docno);
-$detail =new easyTable($pdf, '{10,35,45,50,20,20,55}','width:300;border:1;font-family:THSarabun;font-size:10;valign:M;');
+$detail = new easyTable($pdf, '%{5,20,30,10,15,10,10}', 'border:1;font-family:Trirong;font-size:6;valign:M;line-height:1.5;');
 $data = sizeof($detailData);
 // หน้าละ15row
-$pagebreak = 15;
+$pagebreak = 30;
 $i = 0;
 $countrow = 1;
 $nn = 1;
-$sumqty=0;
-$sumBoxes=0;
-$sumCBM=0;
-while ( $i <  $data)
-{
-if ($countrow > $pagebreak) 
-{
-  $pdf->AddPage();
-  $countrow = 1;
-}
-$countrow++;
-$x=$pdf->GetX();
-$y=$pdf->GetY();
-$detail->easyCell(utf8Th($nn), 'align:C');
-$detail->easyCell(utf8Th($detailData[$i]["Part_Number"]), 'align:C;font-style:B;font-size:10;');
-$detail->easyCell(utf8Th($detailData[$i]["Part_Name"]), 'align:C');
-$detail->easyCell(utf8Th($detailData[$i]["FG_Serial_Number"]), 'align:C;font-style:B;font-size:10;');
-$detail->easyCell(utf8Th($detailData[$i]["Qty"]), 'align:C;font-style:B;font-size:14;');
-$detail->easyCell(utf8Th($detailData[$i]["Package_Type"]), 'align:C;font-style:B;font-size:14;');
-$detail->easyCell(utf8Th(''), 'align:C;font-style:B;font-size:14;');
-$detail->printRow();
-$sumqty += $detailData[$i]['Qty'];
-$i++;$nn++;
+$sumqty = 0;
+$sumBoxes = 0;
+$sumCBM = 0;
+while ($i <  $data) {
+	//echo($countrow).'<br>';
+	if ($countrow > $pagebreak) {
+		//echo('new');
+		$pdf->AddPage();
+		$countrow = 1;
+	}
+	$countrow++;
+	$x = $pdf->GetX();
+	$y = $pdf->GetY();
 
-}
-$detail->easyCell(utf8Th('Total :'), 'align:R;font-style:B;;colspan:4;font-size:14;');
-$detail->easyCell(utf8Th($sumqty), 'align:C;font-size:14;');
-$detail->easyCell(utf8Th(''), 'align:C');
-$detail->easyCell(utf8Th(''), 'align:C;font-size:14;');
-$detail->easyCell(utf8Th(''), 'align:C;colspan:3');
-$detail->printRow();
-$detail->endTable(10);
+	//$pdf->Code128($x+11, $y+2, $detailData[$i]['item_code'], 60, 10);
 
-$lastfooter =new easyTable($pdf, '%{20,25,20,35}','width:300;border:0;font-family:THSarabun;font-size:12;');
-$lastfooter->easyCell(utf8Th('Data Entry By :'), 'align:C;font-size:14;');
-$lastfooter->easyCell(utf8Th('____________________'), 'align:C;font-size:14;');
-$lastfooter->easyCell(utf8Th('Check By :'), 'align:C;font-size:14;');
-$lastfooter->easyCell(utf8Th('____________________  Suppervisor'), 'align:C;font-size:14;');
+	$detail->easyCell(utf8Th($nn), 'align:C');
+	$detail->easyCell(utf8Th($detailData[$i]["part_no"]), 'align:L;');
+	$detail->easyCell(utf8Th($detailData[$i]["part_name"]), 'align:L;');
+	$detail->easyCell(utf8Th($detailData[$i]["pallet_no"]), 'align:C;');
+	$detail->easyCell(utf8Th($detailData[$i]["certificate_no"]), 'align:C;');
+	$detail->easyCell(utf8Th($detailData[$i]["net_per_pallet"]), 'align:C;');
+	$detail->easyCell(utf8Th($detailData[$i]["qty"]), 'align:C;');
+	$detail->printRow();
+	$sumqty += $detailData[$i]['qty'];
+	$i++;
+	$nn++;
+}
+
+$detail->easyCell(utf8Th(''), 'align:C;border:0;');
+$detail->easyCell(utf8Th(''), 'align:C;border:0;');
+$detail->easyCell(utf8Th(''), 'align:C;border:0;');
+$detail->easyCell(utf8Th(''), 'align:C;border:0;');
+$detail->easyCell(utf8Th(''), 'align:C;border:0;');
+$detail->easyCell(utf8Th(''), 'align:C;border:0;');
+$detail->easyCell(utf8Th($sumqty), 'align:C;font-style:B;font-size:7;');
+$detail->printRow();
+$detail->endTable(5);
+
+$lastfooter = new easyTable($pdf, '%{60,10,30}', 'border:0;font-family:Trirong;font-size:8;');
+$lastfooter->easyCell(utf8Th('Note : '), 'align:L;font-style:B;border:LRT;');
+$lastfooter->easyCell('', 'align:C;border:0;');
+$lastfooter->easyCell('Checker', 'align:C;border:1;font-style:B');
 $lastfooter->printRow();
-$lastfooter->endTable(3);
+
+$lastfooter->easyCell(utf8Th(''), 'align:L;border:LR;');
+$lastfooter->easyCell('', 'align:C;border:0;');
+$lastfooter->rowStyle('min-height:15');
+$lastfooter->easyCell('', 'align:C;border:1;');
+$lastfooter->printRow();
+
+$lastfooter->easyCell('', 'align:C;border:LRB;');
+$lastfooter->easyCell('', 'align:C;border:0;');
+$lastfooter->easyCell('TTV SUPPLYCHAIN CO., LTD. (TTV)', 'align:C;border:1;');
+$lastfooter->printRow();
 
 $pdf->Output();
 
 function utf8Th($v)
 {
-	return iconv( 'UTF-8','TIS-620//TRANSLIT',$v);
+	return iconv('UTF-8', 'TIS-620//TRANSLIT', $v);
 }
-?>

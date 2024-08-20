@@ -47,7 +47,6 @@ if($type==1)
 
     function init()
     {
-        
     };
 
     function ele(name)
@@ -87,6 +86,21 @@ if($type==1)
         return setView(v,obj);
     };
 
+	function setTable(tableName, data) {
+        if (!ele(tableName)) return;
+        ele(tableName).clearAll();
+        ele(tableName).parse(data);
+        ele(tableName).filterByAll();
+    };
+
+
+	function loadData(btn) {
+		//var obj = ele("form1").getValues();
+        ajax(fd, {}, 1, function (json) {
+            setTable("dataT1", json.data);
+        }, btn);
+    };
+
 	return {
         view: "scrollview",
         scroll: "native-y",
@@ -97,6 +111,7 @@ if($type==1)
         	type:"clean",
     		rows:
     		[
+				{ view: "template", template: "", type: "header" },
     		    {
 
                 }

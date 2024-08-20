@@ -2,7 +2,8 @@ var header_PartMaster = function () {
     var menuName = "PartMaster_", fd = "MasterData/" + menuName + "data.php";
 
     function init() {
-
+        loadData();
+        reload_options_supplier();
     };
 
     function ele(name) {
@@ -42,50 +43,129 @@ var header_PartMaster = function () {
         ele(tableName).filterByAll();
     };
 
+    function loadData(btn) {
+        ajax(fd, {}, 1, function (json) {
+            setTable('dataT1', json.data);
+            // var dataT1 = ele('dataT1');
+            // console.log(dataT1.getItem());
+        }, null,
+            function (json) {
+                //ele('find').callEvent("onItemClick", []);
+            }, btn);
+
+    };
+
+    function exportExcel(btn) {
+        var dataT1 = ele("dataT1"), obj = {}, data = [];
+        if (dataT1.count() == 0) {
+            webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'ไม่พบข้อมูลในตาราง', callback: function () { } });
+        }
+
+        for (var i = -1, len = dataT1.config.columns.length; ++i < len;) {
+            obj[dataT1.config.columns[i].id] = dataT1.config.columns[i].header[0].text;
+        }
+        delete obj.icon_edit;
+        var objKey = Object.keys(obj);
+        var f = [];
+        for (var i = -1, len = objKey.length; ++i < len;) {
+            f.push(objKey[i]);
+        }
+
+        var col = [];
+        for (var i = -1, len = f.length; ++i < len;) {
+            col[col.length] = obj[f[i]];
+        }
+        data[data.length] = col;
+        if (dataT1.count() > 0) {
+            btn.disable();
+            dataT1.eachRow(function (row) {
+                var r = dataT1.getItem(row), rr = [];
+                for (var i = -1, len = f.length; ++i < len;) {
+                    rr[rr.length] = r[f[i]];
+                }
+                data[data.length] = rr;
+            });
+
+            var worker = new Worker('js/workerToExcel.js?v=1');
+            worker.addEventListener('message', function (e) {
+                saveAs(e.data, 'part_master' + dayjs().format('YYYYMMDDHHmmss') + ".xlsx");
+                btn.enable();
+                webix.message({ expire: 7000, text: "Export สำเร็จ" });
+            }, false);
+            worker.postMessage({ 'cmd': 'start', 'msg': data });
+        }
+        else { webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: "ไม่พบข้อมูลในตาราง", callback: function () { } }); }
+    };
+
+    function reload_options_supplier() {
+        var supplierList = ele("supplier_code").getPopup().getList();
+        supplierList.clearAll();
+        supplierList.load("common/supplierMaster.php?type=2");
+    };
+
+    function reload_options_supplier_edit() {
+        var supplierList = ele("supplier_code_edit").getPopup().getList();
+        supplierList.clearAll();
+        supplierList.load("common/supplierMaster.php?type=2");
+    };
+
     //add
     webix.ui(
         {
             view: "window", id: $n("win_add"), modal: 1,
-            head: "Add (เพิ่มข้อมูล)", top: 50, position: "center",
+            head: "Add (เพิ่มข้อมูล)", top: 50, position: "center", css: "webix_win_head",
+            close: true, move: true,
             body:
             {
-                view: "form", scroll: false, id: $n("win_add_form"), width: 600,
+                view: "form", scroll: false, id: $n("win_add_form"), width: 570,
                 elements:
                     [
                         {
                             cols:
                                 [
                                     {
+                                        paddingX: 20,
+                                        paddingY: 10,
                                         rows:
                                             [
                                                 {
                                                     cols: [
-                                                        vw1('text', 'Part_ID', 'Part ID.', { labelPosition: "top", hidden: 1 }),
-                                                        vw1('text', 'Part_No', 'Part No.', { labelPosition: "top" }),
-                                                        vw1('text', 'Part_Name', 'Part Name', { labelPosition: "top" }),
+                                                        vw1('text', 'alloy', 'Alloy', { required: true, }),
+                                                        vw1('text', 'gauge', 'Gauge', { required: true, placeholder: '0.00' }),
                                                     ],
                                                 },
                                                 {
                                                     cols: [
-                                                        vw1('text', 'MMTH_Part_No', 'MMTH Part No.', { labelPosition: "top" }),
-                                                        vw1('text', 'TAST_No', 'TAST No.', { labelPosition: "top", required: false }),
+                                                        vw1('text', 'part_no', 'Part No.', {}),
+                                                        vw1('text', 'part_name', 'Part Description', {}),
                                                     ],
                                                 },
                                                 {
                                                     cols: [
-                                                        vw1('text', 'CBM_Per_Package', 'CBM Per Package', { labelPosition: "top" }),
-                                                        vw1('text', 'Qty_Per_Package', 'Qty Per Package', { labelPosition: "top" }),
+                                                        vw1('combo', 'supplier_code', 'Supplier', {
+                                                            suggest: "common/supplierMaster.php?type=1", required: true,
+                                                            on: {
+                                                                onBlur: function () {
+                                                                    this.getList().hide();
+                                                                },
+                                                                onItemClick: function () {
+                                                                    reload_options_supplier();
+                                                                }
+                                                            },
+                                                        }),
+                                                        vw1('text', 'part_width', 'Part Width', { required: true, placeholder: '0.00' }),
                                                     ],
                                                 },
                                                 {
                                                     cols: [
-                                                        vw1('text', 'Weight_Package_Part', 'Weight Package Part', { labelPosition: "top", required: false }),
-                                                        vw1('text', 'Specification', 'Specification', { labelPosition: "top", required: false }),
-
+                                                        vw1('richselect', 'package_type', 'Package Type', {
+                                                            required: true,
+                                                            value: '',
+                                                            options: ['Steel', 'Wooden', '']
+                                                        }),
+                                                        {}
                                                     ],
                                                 },
-
-
                                             ]
                                     }
                                 ]
@@ -94,11 +174,12 @@ var header_PartMaster = function () {
                             cols:
                                 [
                                     {},
-                                    vw1('button', 'save', 'Save (บันทึก)', {
-                                        type: 'form', width: 120,
+                                    vw1('button', 'btn_save_add', 'Save', {
+                                        width: 120, css: "webix_green",
+                                        icon: "mdi mdi-content-save", type: "icon",
+                                        tooltip: { template: "บันทึก", dx: 10, dy: 15 },
                                         on: {
                                             onItemClick: function () {
-                                                console.log(ele('win_add_form').getValues());
                                                 var obj = ele('win_add_form').getValues();
                                                 webix.confirm(
                                                     {
@@ -106,8 +187,7 @@ var header_PartMaster = function () {
                                                         callback: function (res) {
                                                             if (res) {
                                                                 ajax(fd, obj, 11, function (json) {
-                                                                    setTable('dataT1', json.data);
-                                                                    console.log(setTable('dataT1', json.data));
+                                                                    loadData();
                                                                     ele('win_add').hide();
                                                                 }, null,
                                                                     function (json) {
@@ -119,19 +199,14 @@ var header_PartMaster = function () {
                                             }
                                         }
                                     }),
-                                    vw1('button', 'cancel', 'Cancel (ยกเลิก)', {
-                                        type: 'danger', width: 120,
+                                    vw1('button', 'btn_cancel_add', 'Cancel', {
+                                        width: 120, css: "webix_red",
+                                        icon: "mdi mdi-cancel", type: "icon",
+                                        tooltip: { template: "ยกเลิก", dx: 10, dy: 15 },
                                         on: {
                                             onItemClick: function () {
                                                 ele('win_add').hide();
-                                                ele('Part_No').setValue('');
-                                                ele('Part_Name').setValue('');
-                                                ele('MMTH_Part_No').setValue('');
-                                                ele('CBM_Per_Package').setValue('');
-                                                ele('Qty_Per_Package').setValue('');
-                                                ele('Specification').setValue('');
-                                                ele('Weight_Package_Part').setValue('');
-                                                ele('TAST_No').setValue('');
+                                                ele('win_add_form').setValues('');
                                             }
                                         }
                                     }),
@@ -150,6 +225,7 @@ var header_PartMaster = function () {
         {
             view: "window", id: $n("win_edit"), modal: 1,
             head: "Edit (แก้ไขข้อมูล)", top: 50, position: "center",
+            close: true, move: true,
             body:
             {
                 view: "form", scroll: false, id: $n("win_edit_form"), width: 600,
@@ -159,42 +235,46 @@ var header_PartMaster = function () {
                             cols:
                                 [
                                     {
+                                        paddingX: 20,
+                                        paddingY: 10,
                                         rows:
                                             [
                                                 {
                                                     cols: [
-                                                        vw2('text', 'Part_No_edit', 'Part_No', 'Part No.', { labelPosition: "top", disabled: true }),
-                                                        vw2('text', 'Part_Name_edit', 'Part_Name', 'Part Name', { labelPosition: "top" }),
+                                                        vw1('text', 'part_id', 'part_id', { hidden: 1 }),
+                                                        vw2('text', 'alloy_edit', 'alloy', 'Alloy', { required: true, }),
+                                                        vw2('text', 'gauge_edit', 'gauge', 'Gauge', { required: true, placeholder: '0.00' }),
                                                     ],
                                                 },
                                                 {
                                                     cols: [
-                                                        vw2('text', 'MMTH_Part_No_edit', 'MMTH_Part_No', 'MMTH Part No.', { labelPosition: "top" }),
-                                                        vw2('text', 'TAST_No_edit', 'TAST_No', 'TAST No.', { labelPosition: "top", required: false }),
+                                                        vw2('text', 'part_no_edit', 'part_no', 'Part No.', {}),
+                                                        vw2('text', 'part_name_edit', 'part_name', 'Part Description', {}),
                                                     ],
                                                 },
                                                 {
                                                     cols: [
-                                                        vw2('text', 'CBM_Per_Package_edit', 'CBM_Per_Package', 'CBM Per Package', { labelPosition: "top" }),
-                                                        vw2('text', 'Qty_Per_Package_edit', 'Qty_Per_Package', 'Qty Per Package', { labelPosition: "top" }),
-                                                    ],
-                                                },
-                                                {
-                                                    cols: [
-                                                        vw2('text', 'Weight_Package_Part_edit', 'Weight_Package_Part', 'Weight Package Part', { labelPosition: "top", required: false }),
-                                                        vw2('text', 'Specification_edit', 'Specification', 'Specification', { labelPosition: "top", required: false }),
-                                                    ],
-                                                },
-                                                {
-                                                    cols: [
-                                                        vw2('richselect', 'Active_edit', 'Active', 'Active', {
-                                                            labelPosition: "top",
-                                                            value: 'Y', options: [
-                                                                { id: 'Y', value: "Yes" },
-                                                                { id: 'N', value: "No" },
-                                                            ]
+                                                        vw2('text', 'part_width_edit', 'part_width', 'Part Width', { required: false, placeholder: '0.00' }),
+                                                        vw2('combo', 'supplier_code_edit', 'supplier_code', 'Supplier', {
+                                                            suggest: "common/supplierMaster.php?type=1", required: false,
+                                                            on: {
+                                                                onItemClick: function () {
+                                                                    reload_options_supplier_edit();
+                                                                }
+                                                            },
                                                         }),
-                                                        {}
+                                                    ],
+                                                },
+                                                {
+                                                    cols: [
+                                                        vw2('richselect', 'package_type_edit', 'package_type', 'Package Type', {
+                                                            required: false,
+                                                            options: ['Steel', 'Wooden', '']
+                                                        }),
+                                                        vw2('richselect', 'status_edit', 'status', 'Status', {
+                                                            value: 'Active',
+                                                            options: ['Active', 'Inactive']
+                                                        }),
                                                     ],
                                                 },
 
@@ -206,12 +286,13 @@ var header_PartMaster = function () {
                             cols:
                                 [
                                     {},
-                                    vw1('button', 'edit', 'Save (บันทึก)', {
-                                        type: 'form', width: 120,
+                                    vw1('button', 'btn_save_edit', 'Save', {
+                                        width: 120, css: "webix_green",
+                                        icon: "mdi mdi-content-save", type: "icon",
+                                        tooltip: { template: "บันทึก", dx: 10, dy: 15 },
                                         on: {
                                             onItemClick: function () {
                                                 var obj = ele('win_edit_form').getValues();
-                                                console.log(obj);
                                                 webix.confirm(
                                                     {
                                                         title: "กรุณายืนยัน", ok: "ใช่", cancel: "ไม่", text: "คุณต้องการบันทึกข้อมูล<br><font color='#27ae60'><b>ใช่</b></font> หรือ <font color='#3498db'><b>ไม่</b></font>",
@@ -219,8 +300,7 @@ var header_PartMaster = function () {
                                                             if (res) {
                                                                 ajax(fd, obj, 21, function (json) {
                                                                     ele('win_edit').hide();
-                                                                    setTable('dataT1', json.data);
-                                                                    console.log(setTable('dataT1', json.data));
+                                                                    loadData();
                                                                 }, null,
                                                                     function (json) {
                                                                         /* ele('find').callEvent("onItemClick", []); */
@@ -233,8 +313,10 @@ var header_PartMaster = function () {
                                         }
                                     }),
 
-                                    vw1('button', 'cancel_edit', 'Cancel (ยกเลิก)', {
-                                        type: 'danger', width: 120,
+                                    vw1('button', 'btn_cancel_edit', 'Cancel', {
+                                        width: 120, css: "webix_red",
+                                        icon: "mdi mdi-cancel", type: "icon",
+                                        tooltip: { template: "ยกเลิก", dx: 10, dy: 15 },
                                         on: {
                                             onItemClick: function () {
                                                 ele('win_edit').hide();
@@ -251,7 +333,6 @@ var header_PartMaster = function () {
         });
 
 
-
     return {
         view: "scrollview",
         scroll: "native-y",
@@ -262,32 +343,93 @@ var header_PartMaster = function () {
             type: "clean",
             rows:
                 [
+                    { view: "template", template: "Part Master", type: "header" },
                     {
                         view: "form", scroll: false, id: $n('form1'),
                         elements: [
                             {
                                 cols:
                                     [
-                                        vw1('button', 'add', 'Add (เพิ่มข้อมูล)', {
+                                        vw1('button', 'btn_add', 'Add', {
+                                            width: 120, css: "webix_blue",
+                                            icon: "mdi mdi-plus-circle", type: "icon",
+                                            tooltip: { template: "เพิ่มข้อมูล", dx: 10, dy: 15 },
                                             on: {
                                                 onItemClick: function () {
-                                                    console.log(ele('win_add').show());
+                                                    ele('win_add').show();
                                                 }
                                             }
                                         }),
-                                        vw1('button', 'find', 'Find (ค้นหา)', {
+                                        {},
+                                        vw1('button', 'btn_export_template', 'Template Upload', {
+                                            width: 150, css: "webix_secondary",
+                                            icon: "mdi mdi-download", type: "icon",
+                                            tooltip: { template: "ตัวอย่างเทมเพลตที่ใช้ในการอัพโหลด", dx: 10, dy: 15 },
+                                            on: {
+                                                onItemClick: function () {
+                                                    window.location.href = 'MasterData/template_upload/template_upload_part_master.xlsx';
+                                                }
+                                            },
+                                        }),
+                                        vw1("uploader", 'btn_upload_file', "Upload Data", {
+                                            width: 120, css: "webix_blue",
+                                            icon: "mdi mdi-upload", type: "icon",
+                                            tooltip: { template: "ดาวน์โหลดข้อมูล", dx: 10, dy: 15 },
+                                            on:
+                                            {
+                                                onBeforeFileAdd: function (file) {
+                                                    var type = file.type.toLowerCase();
+                                                    if (type == "csv" || type == "xlsx" || type == "xls") {
+
+                                                    }
+                                                    else {
+                                                        webix.alert({ title: "<b>ข้อความจากระบบ</b>", text: "รองรับ CSV ,XLS ,XLSX เท่านั้น", type: 'alert-error' });
+                                                        return false;
+                                                    }
+                                                    //ele("btn_upload_file").disable();
+                                                },
+                                                onAfterFileAdd: function (item) {
+                                                    var formData = new FormData();
+                                                    this.files.data.each(function (obj, i) {
+                                                        formData.append("upload", obj.file);
+                                                    });
+                                                    $.ajax({
+                                                        type: 'POST',
+                                                        cache: false,
+                                                        contentType: false,
+                                                        processData: false,
+                                                        url: fd + '?type=41',
+                                                        data: formData,
+                                                        success: function (data) {
+                                                            //ele("btn_upload_file").enable();
+                                                            loadData();
+                                                            var json = JSON.parse(data);
+                                                            webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: json.mms, callback: function () { } });
+                                                        }
+                                                    });
+                                                },
+                                            },
+                                        }),
+                                        vw1('button', 'btn_export', 'Export Data', {
+                                            width: 120, css: "webix_orange",
+                                            icon: "mdi mdi-table-arrow-down", type: "icon",
+                                            tooltip: { template: "ดาวน์โหลดข้อมูล", dx: 10, dy: 15 },
+                                            on:
+                                            {
+                                                onItemClick: function () {
+                                                    exportExcel(this);
+                                                    // exportExcelHistory(this);
+                                                }
+                                            },
+                                        }),
+                                        {},
+                                        vw1('button', 'btn_find', 'Find', {
+                                            width: 120, css: "webix_primary",
+                                            icon: "mdi mdi-magnify", type: "icon",
+                                            tooltip: { template: "ค้นหา", dx: 10, dy: 15 },
                                             on: {
                                                 onItemClick: function (id, e) {
-                                                    console.log(ele("form1").getValues());
-                                                    var obj = ele('form1').getValues();
-
-                                                    ajax(fd, obj, 1, function (json) {
-                                                        //webix.alert({ title: "<b>ข้อความจากระบบ</b>", ok: 'ตกลง', text: 'บันทึกสำเร็จ', callback: function () { } });
-                                                        setTable('dataT1', json.data);
-                                                    }, null,
-                                                        function (json) {
-                                                            /* ele('find').callEvent("onItemClick", []); */
-                                                        });
+                                                    loadData();
                                                 }
                                             }
                                         }),
@@ -299,7 +441,8 @@ var header_PartMaster = function () {
                                         view: "datatable", id: $n("dataT1"), navigation: true, select: "row", editaction: "custom",
                                         resizeColumn: true, autoheight: false, multiselect: true, hover: "myhover",
                                         threeState: true, rowLineHeight: 25, rowHeight: 25,
-                                        datatype: "json", headerRowHeight: 25, leftSplit: 3, editable: true,
+                                        datatype: "json", headerRowHeight: 25, leftSplit: 4, editable: true,
+                                        //pager: $n("Master_pagerA"),
                                         scheme:
                                         {
                                             $change: function (obj) {
@@ -309,30 +452,32 @@ var header_PartMaster = function () {
                                         },
                                         columns: [
                                             {
-                                                id: "icon_edit", header: "&nbsp;", width: 40, template: function (row) {
-                                                    return "<span style='cursor:pointer' class='webix_icon fa-pencil'></span>";
+                                                id: "icon_edit", header: "&nbsp;", width: 50, template: function (row) {
+                                                    return "<span style='cursor:pointer; font-size:16px;' class='mdi mdi-pencil'></span>";
+                                                    //return "<button class='mdi mdi-pencil webix_button' style='width:25px; height:20px; color:#ffffff; background-color: #68A4C4;'></button>";
                                                 }
                                             },
                                             { id: "NO", header: "No.", css: "rank", width: 50, sort: "int" },
-                                            { id: "Part_No", header: ["Part Number", { content: "textFilter" }], width: 150 },
-                                            { id: "Part_Name", header: ["Part Name", { content: "textFilter" }], width: 240 },
-                                            { id: "MMTH_Part_No", header: ["MMTH Part Number", { content: "textFilter" }], width: 180 },
-                                            { id: "CBM_Per_Package", header: ["CBM/Package", { content: "textFilter" }], width: 140 },
-                                            { id: "Qty_Per_Package", header: ["Qty/Package", { content: "textFilter" }], width: 140 },
-                                            { id: "Specification", header: ["Specification", { content: "textFilter" }], width: 200 },
-                                            { id: "Weight_Package_Part", header: ["Weight(Package+Part)", { content: "textFilter" }], width: 200 },
-                                            { id: "TAST_No", header: ["TAST No.", { content: "textFilter" }], width: 140 },
-                                            { id: "Active", header: ["Active", { content: "textFilter" }], width: 100 },
-                                            { id: "Creation_Date", header: ["Creation Date", { content: "textFilter" }], width: 150 },
-
+                                            { id: "alloy", header: [{ text: "Alloy", css: { "text-align": "center" } }, { content: "textFilter" }], width: 100, css: { "text-align": "center" }, },
+                                            { id: "gauge", header: [{ text: "Gauge", css: { "text-align": "center" } }, { content: "numberFilter" }], width: 100, css: { "text-align": "center" }, },
+                                            { id: "part_width", header: [{ text: "Part Width", css: { "text-align": "center" } }, { content: "numberFilter" }], width: 100, css: { "text-align": "center" }, },
+                                            { id: "part_no", header: [{ text: "Part No.", css: { "text-align": "center" } }, { content: "textFilter" }], width: 200, css: { "text-align": "center" }, },
+                                            { id: "part_name", header: [{ text: "Part Description", css: { "text-align": "center" } }, { content: "textFilter" }], width: 250, css: { "text-align": "center" }, },
+                                            { id: "package_type", header: [{ text: "Package type", css: { "text-align": "center" } }, { content: "textFilter" }], width: 100, css: { "text-align": "center" }, },
+                                            { id: "supplier_code", header: [{ text: "Supplier", css: { "text-align": "center" } }, { content: "textFilter" }], width: 100, css: { "text-align": "center" }, },
+                                            { id: "status", header: [{ text: "Status", css: { "text-align": "center" } }, { content: "textFilter" }], width: 100, css: { "text-align": "center" }, },
+                                            { id: "created_at", header: [{ text: "Created at", css: { "text-align": "center" } }, { content: "textFilter" }], width: 120, css: { "text-align": "center" }, },
+                                            { id: "created_by", header: [{ text: "Created by", css: { "text-align": "center" } }, { content: "textFilter" }], width: 120, css: { "text-align": "center" }, },
+                                            { id: "updated_at", header: [{ text: "Updated at", css: { "text-align": "center" } }, { content: "textFilter" }], width: 120, css: { "text-align": "center" }, },
+                                            { id: "updated_by", header: [{ text: "Updated by", css: { "text-align": "center" } }, { content: "textFilter" }], width: 120, css: { "text-align": "center" }, },
                                         ],
                                         onClick:
                                         {
-                                            "fa-pencil": function (e, t) {
-                                                console.log(ele('win_edit').show());
+                                            "mdi-pencil": function (e, t) {
+                                                ele('win_edit').show();
                                                 var row = this.getItem(t);
-                                                console.log(row);
-                                                console.log(ele('win_edit_form').setValues(row));
+                                                ele('win_edit_form').setValues(row);
+                                                reload_options_supplier_edit();
                                             },
                                         },
                                         on: {

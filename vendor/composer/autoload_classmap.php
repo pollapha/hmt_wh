@@ -6,5 +6,16 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
+    'FPDF' => $vendorDir . '/setasign/fpdf/fpdf.php',
+    'Jstewmc\\Chunker\\TestCase' => $vendorDir . '/jstewmc/chunker/tests/TestCase.php',
+    'Jstewmc\\Rtf\\Element\\Control\\TestControl' => $vendorDir . '/jstewmc/rtf/tests/Element/Control/TestControl.php',
+    'Jstewmc\\Rtf\\Element\\TestElement' => $vendorDir . '/jstewmc/rtf/tests/Element/TestElement.php',
+    'Jurosh\\PDFMerge\\PDFMerger' => $vendorDir . '/jurosh/pdf-merge/src/Jurosh/PDFMerge/PDFMerger.php',
+    'Jurosh\\PDFMerge\\PdfObject' => $vendorDir . '/jurosh/pdf-merge/src/Jurosh/PDFMerge/PDFObject.php',
+    'PhpToken' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
+    'Stringable' => $vendorDir . '/myclabs/php-enum/stubs/Stringable.php',
+    'UnhandledMatchError' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
+    'ValueError' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
 );

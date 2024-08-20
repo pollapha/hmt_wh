@@ -40,6 +40,7 @@ foreach ($checkPageDataObject as $key => $value)
             {
                 id:"'.$key.'",
                 value: "'.$checkPageDataObject->{$key.'_1_'}.'",
+                icon: "'.$checkPageDataObject->{$key.'_icon_'}.'",
                 open: 1,
                 data: 
                 [

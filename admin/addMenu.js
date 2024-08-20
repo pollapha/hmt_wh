@@ -81,7 +81,7 @@ var header_addMenu = function () {
                             [
 
                                 {
-                                    view: "button", value: "Save (บันทึกข้อมูล)", type: "form", id: "addMenu_save", width: 160, on:
+                                    view: "button", value: "Save (บันทึกข้อมูล)", css:"webix_green", type: "form", id: "addMenu_save", width: 160, on:
                                     {
                                         onItemClick: function (id, e) {
                                             if ($$('addMenu_form1').validate()) {

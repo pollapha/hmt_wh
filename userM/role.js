@@ -50,7 +50,7 @@ var header_role = function()
                                                 cols:
                                                 [
                                                     
-                                                    {view:"button",value:"Save (บันทึกข้อมูล)",type:"form",id:"role_save",on:
+                                                    {view:"button",value:"Save (บันทึกข้อมูล)",css:"webix_green",id:"role_save",on:
                                                         {
                                                             onItemClick:function(id, e)
                                                             {
@@ -177,7 +177,7 @@ var header_role = function()
                                             {
                                                 cols:
                                                 [
-                                                    {view:"button",value:"Add (เพิ่มบทบาท)",type:"form",id:"role_save2",on:
+                                                    {view:"button",value:"Add (เพิ่มบทบาท)",css:"webix_blue",id:"role_save2",on:
                                                         {
                                                             onItemClick:function(id, e)
                                                             {

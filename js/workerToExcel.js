@@ -5,7 +5,7 @@ self.addEventListener('message', function(e) {
   var data = e.data;
   switch (data.cmd) {
     case 'start':
-      	var ws_name = "Mijung";
+      	var ws_name = "Sheet 1";
 		var wb = new Workbook(), ws = sheet_from_array_of_arrays(data.msg);
 		wb.SheetNames.push(ws_name);
 		wb.Sheets[ws_name] = ws;
